@@ -71,7 +71,9 @@ List<CellIndex> edgeSegment(CardShape shape, CellIndex cell, CardinalEdge edge) 
 
 /// Applies a corner drag with standard corner rules: both full edge
 /// segments that meet at the corner move, plus — when both axes extend —
-/// the diagonal fill that keeps the corner square.
+/// the diagonal fill that keeps the corner square. Concave corners work the
+/// same way; their two edge segments belong to different anchor cells and
+/// pulling them outward fills the notch, so no diagonal fill applies.
 CardShape applyCornerResize(
   CardShape shape,
   GridHandle handle,
@@ -81,7 +83,7 @@ CardShape applyCornerResize(
 ) {
   final (hEdge, vEdge) = handle.axes;
   final hSegment = edgeSegment(shape, handle.cell, hEdge!);
-  final vSegment = edgeSegment(shape, handle.cell, vEdge!);
+  final vSegment = edgeSegment(shape, handle.cellV, vEdge!);
 
   var result = shape;
   for (final cell in hSegment) {
@@ -91,7 +93,7 @@ CardShape applyCornerResize(
     result = applyStripResize(result, cell, vEdge, vSteps, metrics);
   }
 
-  if (hSteps > 0 && vSteps > 0) {
+  if (hSteps > 0 && vSteps > 0 && !handle.concave) {
     final (hdc, _) = hEdge.outward;
     final (_, vdr) = vEdge.outward;
     final fill = <CellIndex>{};
@@ -104,6 +106,42 @@ CardShape applyCornerResize(
     if (fill.isNotEmpty) result = CardShape({...result.cells, ...fill});
   }
   return result;
+}
+
+/// Applies a side-handle drag as an L-shaped gesture: [primarySteps] along
+/// the edge's outward axis carve the new section (one strip per crossed
+/// cell), and [perpSteps] then grow ONLY that new section perpendicularly —
+/// the original card never changes. Dragging inward (negative primary)
+/// stays a plain strip retract.
+///
+/// Example: on a 2x2 card, grab the east handle of the top row, drag right
+/// 2 cells and up 1 — a 2x2 block appears merged onto the card's top-right.
+CardShape applySideResize(
+  CardShape shape,
+  CellIndex handleCell,
+  CardinalEdge edge,
+  int primarySteps,
+  int perpSteps,
+  GridMetrics metrics,
+) {
+  if (primarySteps <= 0) {
+    return applyStripResize(shape, handleCell, edge, primarySteps, metrics);
+  }
+  final (dc, dr) = edge.outward;
+  final (pc, pr) =
+      edge.isHorizontalDrag ? (0, perpSteps.sign) : (perpSteps.sign, 0);
+  final added = <CellIndex>{};
+  for (var i = 1; i <= primarySteps; i++) {
+    for (var j = 0; j <= perpSteps.abs(); j++) {
+      final cell =
+          handleCell.translate(dc * i + pc * j, dr * i + pr * j);
+      if (metrics.cellInBounds(cell) && !shape.cells.contains(cell)) {
+        added.add(cell);
+      }
+    }
+  }
+  if (added.isEmpty) return shape;
+  return CardShape({...shape.cells, ...added});
 }
 
 /// A submissive card's transient reaction to the aggressor.

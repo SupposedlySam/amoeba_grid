@@ -53,6 +53,74 @@ void main() {
       final result = applyCornerResize(shape, handle, 1, 1, metrics);
       expect(result, CardShape.rect(0, 0, 3, 3));
     });
+
+    test('concave corner pulls both edge segments and fills the notch', () {
+      // L-shape: vertical arm (0,0)-(0,1), foot (1,1). Concave NE corner
+      // anchored on (0,0) east edge and (1,1) north edge.
+      final shape = CardShape(
+          const [CellIndex(0, 0), CellIndex(0, 1), CellIndex(1, 1)]);
+      final handle = GridHandle(
+        cardId: 'x',
+        cell: const CellIndex(0, 0),
+        cellV: const CellIndex(1, 1),
+        center: Offset.zero,
+        hitRadius: 10,
+        corner: CornerKind.northEast,
+        concave: true,
+      );
+      // Dragging the notch eastward extends the vertical arm's east
+      // segment, filling the notch into a full 2x2.
+      final result = applyCornerResize(shape, handle, 1, 0, metrics);
+      expect(result, CardShape.rect(0, 0, 2, 2));
+    });
+  });
+
+  group('applySideResize (L-gesture)', () {
+    test('perpendicular movement grows only the new section', () {
+      // 2x2 card at rows 2-3; grab east handle of its top row (1,2),
+      // drag right 2 and up 1: a 2x2 block merges onto the top-right.
+      final shape = CardShape.rect(0, 2, 2, 2);
+      final result = applySideResize(
+          shape, const CellIndex(1, 2), CardinalEdge.east, 2, -1, metrics);
+      final expected = {
+        ...shape.cells,
+        const CellIndex(2, 2), const CellIndex(3, 2), // primary strip
+        const CellIndex(2, 1), const CellIndex(3, 1), // perpendicular growth
+      };
+      expect(result, CardShape(expected));
+      expect(result.contains(0, 1), isFalse,
+          reason: 'the original card must not expand');
+      expect(result.contains(1, 1), isFalse,
+          reason: 'the original card must not expand');
+    });
+
+    test('without perpendicular movement it stays a strip resize', () {
+      final shape = CardShape.rect(0, 0, 2, 2);
+      final result = applySideResize(
+          shape, const CellIndex(1, 0), CardinalEdge.east, 2, 0, metrics);
+      expect(result.cells.length, 6);
+      expect(result.contains(3, 0), isTrue);
+      expect(result.contains(3, 1), isFalse);
+    });
+
+    test('negative primary steps retract and ignore perpendicular', () {
+      final shape = CardShape.rect(0, 0, 3, 1);
+      final result = applySideResize(
+          shape, const CellIndex(2, 0), CardinalEdge.east, -1, 2, metrics);
+      expect(result, CardShape.rect(0, 0, 2, 1));
+    });
+
+    test('north handle L-gesture grows east/west of the new section', () {
+      final shape = CardShape.rect(2, 2, 2, 2);
+      final result = applySideResize(
+          shape, const CellIndex(2, 2), CardinalEdge.north, 1, 1, metrics);
+      final expected = {
+        ...shape.cells,
+        const CellIndex(2, 1), // primary: up from (2,2)
+        const CellIndex(3, 1), // perpendicular: east of the new cell
+      };
+      expect(result, CardShape(expected));
+    });
   });
 
   group('trimSubmissive', () {

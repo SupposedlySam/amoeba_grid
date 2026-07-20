@@ -39,12 +39,19 @@ class DragSession {
   /// Snapped candidate shape shown as the preview.
   late CardShape preview = originShape;
 
+  /// The preview from the previous update — the aggressor's last position
+  /// before the current one, used to determine which submissive edge a
+  /// fresh contact came through (edge-to-edge geometry).
+  late CardShape lastPreview = originShape;
+
   /// Transient reactions of other cards, keyed by card id. Cards drop out
   /// of this map the moment they stop overlapping (submitted values are
-  /// transient) but keep their first-recorded entry edge in [entryEdges].
+  /// transient) and their recorded entry edge clears with them, so a
+  /// re-contact from a different side computes a fresh entry edge without
+  /// dropping the card.
   final Map<String, SubmissiveState> submissives = {};
 
-  /// First aggressed edge per card, sticky for the whole session.
+  /// Aggressed edge per card, held only while contact lasts.
   final Map<String, CardinalEdge> entryEdges = {};
 
   /// Last snapped cell-delta, used to derive the approach direction when a
@@ -198,6 +205,7 @@ class FluidGridController extends ChangeNotifier {
       DragKind.move => _movePreview(session, metrics),
       DragKind.resize => _resizePreview(session, metrics),
     };
+    session.lastPreview = previousPreview;
 
     if (session.preview != previousPreview) {
       FluidGridDiagnostics.emit(
@@ -239,9 +247,12 @@ class FluidGridController extends ChangeNotifier {
       return applyCornerResize(session.originShape, handle,
           stepsAlong(hEdge!), stepsAlong(vEdge!), metrics);
     }
+    // Sides support the L-gesture: primary axis carves the new section,
+    // perpendicular movement grows only that new section.
     final edge = handle.edge!;
-    return applyStripResize(session.originShape, handle.cell, edge,
-        stepsAlong(edge), metrics);
+    final perpDelta = edge.isHorizontalDrag ? delta.dy : delta.dx;
+    return applySideResize(session.originShape, handle.cell, edge,
+        stepsAlong(edge), metrics.snapSteps(perpDelta), metrics);
   }
 
   void _resolveSubmissives(DragSession session, GridMetrics metrics) {
@@ -255,12 +266,17 @@ class FluidGridController extends ChangeNotifier {
     for (final entry in _committed.entries) {
       if (entry.key == session.cardId) continue;
       final committed = entry.value;
-      if (!committed.cells.any(aggressorCells.contains)) continue;
+      if (!committed.cells.any(aggressorCells.contains)) {
+        // Contact broken: forget the aggressed edge so a re-contact from a
+        // different side (within the same drag) computes a fresh one.
+        session.entryEdges.remove(entry.key);
+        continue;
+      }
 
       final entryEdge = session.entryEdges.putIfAbsent(entry.key, () {
         final edge = _entryEdgeFor(committed, session, approach);
         FluidGridDiagnostics.emit(FluidGridEventKind.submissiveTrimmed,
-            'first contact', {'card': entry.key, 'entryEdge': edge.name});
+            'contact', {'card': entry.key, 'entryEdge': edge.name});
         return edge;
       });
 
@@ -332,17 +348,24 @@ class FluidGridController extends ChangeNotifier {
     return delta.dy >= 0 ? CardinalEdge.south : CardinalEdge.north;
   }
 
-  /// The submissive edge the aggressor came through: opposite the direction
-  /// of travel, sanity-checked against relative geometry when the shapes
-  /// clearly sit apart on one axis.
+  /// The submissive edge the aggressor came through, decided edge-to-edge:
+  /// where the aggressor sat immediately before this contact (its last
+  /// preview) relative to the submissive. Falls back to the travel
+  /// direction only when the geometry is ambiguous.
   CardinalEdge _entryEdgeFor(
       CardShape submissive, DragSession session, CardinalEdge approach) {
-    final origin = session.originShape;
-    if (origin.maxCol < submissive.minCol) return CardinalEdge.west;
-    if (origin.minCol > submissive.maxCol) return CardinalEdge.east;
-    if (origin.maxRow < submissive.minRow) return CardinalEdge.north;
-    if (origin.minRow > submissive.maxRow) return CardinalEdge.south;
-    return approach.opposite;
+    final prior = session.lastPreview;
+    CardinalEdge? horizontal;
+    if (prior.maxCol < submissive.minCol) horizontal = CardinalEdge.west;
+    if (prior.minCol > submissive.maxCol) horizontal = CardinalEdge.east;
+    CardinalEdge? vertical;
+    if (prior.maxRow < submissive.minRow) vertical = CardinalEdge.north;
+    if (prior.minRow > submissive.maxRow) vertical = CardinalEdge.south;
+    if (horizontal != null && vertical != null) {
+      // Diagonal approach: the dominant travel axis decides.
+      return approach.isHorizontalDrag ? horizontal : vertical;
+    }
+    return horizontal ?? vertical ?? approach.opposite;
   }
 
   /// Commits the aggressor's preview and every active submissive's transient

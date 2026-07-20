@@ -15,10 +15,8 @@ class FluidGridStyle {
     required this.cardBorderColor,
     required this.accentColor,
     required this.handleColor,
-    required this.handleIconColor,
     required this.backdropDotColor,
     this.cardElevation = 6,
-    this.handleIcon = Icons.back_hand,
   });
 
   /// Dark-first defaults tuned for a bento-style dashboard.
@@ -29,7 +27,6 @@ class FluidGridStyle {
       cardBorderColor: scheme.outlineVariant.withValues(alpha: 0.35),
       accentColor: scheme.primary,
       handleColor: scheme.primary,
-      handleIconColor: scheme.onPrimary,
       backdropDotColor: scheme.onSurface.withValues(alpha: 0.10),
     );
   }
@@ -38,10 +35,8 @@ class FluidGridStyle {
   final Color cardBorderColor;
   final Color accentColor;
   final Color handleColor;
-  final Color handleIconColor;
   final Color backdropDotColor;
   final double cardElevation;
-  final IconData handleIcon;
 }
 
 /// Faint dots at tile intersections so the field reads as a grid without
@@ -142,10 +137,9 @@ class PreviewPainter extends CustomPainter {
 }
 
 /// Paints the resize affordances of the hovered card: faint hint dots on
-/// every handle, and a progressively exposed semicircular grab tab (with a
-/// hand icon) on the handle under the pointer. Corners get quarter-circle
-/// tabs oriented along the diagonal, sitting inside the outside corner
-/// radius.
+/// every handle, and a progressively exposed semicircular grab tab on the
+/// handle under the pointer. Corners (convex and concave) get
+/// quarter-circle tabs oriented along their diagonal.
 class HandlesPainter extends CustomPainter {
   HandlesPainter({
     required this.handles,
@@ -179,31 +173,12 @@ class HandlesPainter extends CustomPainter {
     final (startAngle, sweep) = _arcFor(active);
     canvas.drawArc(Rect.fromCircle(center: active.center, radius: radius),
         startAngle, sweep, true, tabPaint);
-
-    if (reveal > 0.4) {
-      final iconSize = radius * 0.9;
-      final textPainter = TextPainter(
-        text: TextSpan(
-          text: String.fromCharCode(style.handleIcon.codePoint),
-          style: TextStyle(
-            fontSize: iconSize,
-            fontFamily: style.handleIcon.fontFamily,
-            package: style.handleIcon.fontPackage,
-            color: style.handleIconColor
-                .withValues(alpha: ((reveal - 0.4) / 0.6).clamp(0, 1)),
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      textPainter.paint(
-          canvas,
-          active.center -
-              Offset(textPainter.width / 2, textPainter.height / 2));
-    }
   }
 
   /// Semicircles face outward from the card edge; quarter circles bisect
-  /// the corner diagonal. Angles are in radians, screen coordinates.
+  /// the corner diagonal (concave corners face into their notch, which is
+  /// the same diagonal as the matching convex kind). Angles are in radians,
+  /// screen coordinates.
   (double, double) _arcFor(GridHandle handle) {
     const pi = 3.1415926535897932;
     if (!handle.isCorner) {

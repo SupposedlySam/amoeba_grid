@@ -39,17 +39,22 @@ void main() {
     controller.updateDrag(Offset(100 + pitch * 6.1, 100));
     expect(controller.session!.submissives.containsKey('b'), isFalse);
 
-    // Back into contact, then drop: both cards record their shapes.
+    // Back into contact — a fresh contact, now approaching from the east.
+    // The aggressor consumes b entirely from that side, so b relocates
+    // west (opposite the new entry edge). Drop records both shapes.
     controller.updateDrag(Offset(100 + pitch * 3.1, 100));
+    final recontact = controller.session!.submissives['b']!;
+    expect(recontact.entryEdge, CardinalEdge.east);
+    expect(recontact.relocated, isTrue);
     await controller.endDrag();
     expect(controller.committedShape('a'), CardShape.rect(3, 0, 2, 2));
-    expect(controller.committedShape('b'), CardShape.rect(5, 0, 1, 2));
+    expect(controller.committedShape('b'), CardShape.rect(1, 0, 2, 2));
 
     // A fresh controller over the same storage restores the user layout.
     final revived = makeController(storage);
     await revived.load();
     expect(revived.committedShape('a'), CardShape.rect(3, 0, 2, 2));
-    expect(revived.committedShape('b'), CardShape.rect(5, 0, 1, 2));
+    expect(revived.committedShape('b'), CardShape.rect(1, 0, 2, 2));
   });
 
   test('cancel reverts everything', () async {
@@ -82,6 +87,37 @@ void main() {
     expect(tiny.relocated, isTrue);
     expect(tiny.shape, CardShape.rect(4, 0, 1, 1),
         reason: 'jumps east, opposite the west entry edge');
+  });
+
+  test('re-contact from another side computes a fresh entry edge', () async {
+    final config8 = const FluidGridConfig(columns: 8, rows: 8);
+    final controller =
+        FluidGridController(config: config8, storage: FluidGridMemoryStorage())
+          ..registerCards({
+            'a': CardShape.rect(6, 3, 1, 1),
+            'b': CardShape.rect(3, 3, 2, 2),
+          });
+    controller
+        .updateMetrics(GridMetrics.resolve(config8, const Size(1200, 800)));
+    await controller.load();
+    final pitch = controller.metrics!.pitch;
+
+    // Start east of b and push west into its east edge.
+    controller.startMove('a', const Offset(0, 0));
+    controller.updateDrag(Offset(-pitch * 2.1, 0));
+    expect(controller.session!.submissives['b']!.entryEdge, CardinalEdge.east);
+
+    // Without dropping: retreat clear of b...
+    controller.updateDrag(const Offset(0, 0));
+    expect(controller.session!.submissives, isEmpty);
+
+    // ...swing below b, then push up into its south edge.
+    controller.updateDrag(Offset(-pitch * 3.1, pitch * 2.1));
+    expect(controller.session!.submissives, isEmpty,
+        reason: 'directly below b, not overlapping');
+    controller.updateDrag(Offset(-pitch * 3.1, pitch * 1.1));
+    expect(
+        controller.session!.submissives['b']!.entryEdge, CardinalEdge.south);
   });
 
   test('resize preview holds origin shape until release', () async {

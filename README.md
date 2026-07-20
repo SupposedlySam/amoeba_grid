@@ -16,17 +16,20 @@ non-rectangular shapes).
   viewport. When it can't fit, the field pans in both axes
   (spreadsheet-style, powered by `TwoDimensionalScrollable`).
 - **Cards are not just rectangles** — every open cell edge exposes a
-  semicircular grab handle (progressively revealed hand icon on hover);
-  dragging one extends or retracts *just that row/column strip*. Corners use
-  standard both-axes rules with quarter-circle affordances tucked inside the
-  outside corner radius.
+  semicircular grab handle (progressively revealed on hover); dragging one
+  extends or retracts *just that row/column strip*, and dragging
+  perpendicular mid-gesture grows only the newly carved section (L-shaped
+  drags). Corners — convex *and* concave — use standard both-axes rules
+  with quarter-circle affordances that respect the corner radii.
 - **50% snap previews** — dragging past the midpoint of the next column/row
   (gap midpoints included) snaps a preview outline; releasing commits it.
 - **Aggressor / submissive collisions** — drag a card through another and the
-  other card's edge defers like an amoeba: it cedes cells from the first
-  aggressed edge, reverts the moment you pass beyond it (transient values),
-  and records its ceded shape as its own if you drop while overlapping. A
-  card that would shrink below 1x1 jumps to the opposite side instead.
+  other card's edge defers like an amoeba: it cedes cells from the edge the
+  aggressor hit (decided edge-to-edge at contact, and re-decided on every
+  fresh contact within the same drag), reverts the moment you pass beyond it
+  (transient values), and records its ceded shape as its own if you drop
+  while overlapping. A card that would shrink below 1x1 jumps to the side
+  opposite the aggressor instead.
 - **Gaps always respected** — identical horizontal/vertical gutters between
   islands, including self-adjacent diagonal pinches.
 - **Persistence with breakpoints** — user shaping is stored against the
@@ -93,7 +96,8 @@ if (kDebugMode) {
 | --- | --- |
 | Drag card body | Move the whole card; snapped preview at 50% crossings |
 | Drag side handle | Extend/retract that single row/column strip |
-| Drag corner handle | Standard corner resize: both full edge segments |
+| ...then drag perpendicular | Grow only the new section in that direction |
+| Drag corner handle (convex or concave) | Standard corner resize: both edge segments through the corner |
 | Drag near viewport edge | Auto-pans the field under the drag |
 | Background drag / trackpad scroll | Pan the whole field in both axes |
 | <kbd>Esc</kbd> during a drag | Cancel and revert everything |
