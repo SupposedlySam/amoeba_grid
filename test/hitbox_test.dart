@@ -1,15 +1,15 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fluid_draggable_grid/fluid_draggable_grid.dart';
-import 'package:fluid_draggable_grid/src/engine/handles.dart';
+import 'package:liquid_grid/liquid_grid.dart';
+import 'package:liquid_grid/src/engine/handles.dart';
 
 /// Exhaustive grab-zone boundary tests. Geometry is pinned: cell 100px,
 /// gap 12px, pitch 112px, hitRadius 26, side interior reach 12, side
 /// tangent reach 56 (full cell edge + half gap each side), corner pull 6
 /// (outside radius 20 * 0.3), concave pull 5 (inside radius 10 * 0.3 + 2).
 void main() {
-  const config = FluidGridConfig(
+  const config = LiquidGridConfig(
     columns: 12,
     rows: 12,
     minCellExtent: 100,
@@ -247,16 +247,16 @@ void main() {
   });
 
   group('end to end: gutter presses resize the correct card', () {
-    Future<FluidGridController> pumpPair(WidgetTester tester,
+    Future<LiquidGridController> pumpPair(WidgetTester tester,
         Map<String, CardShape> shapes) async {
-      final controller = FluidGridController(config: config);
+      final controller = LiquidGridController(config: config);
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(
-          body: FluidGridView(
+          body: LiquidGridView(
             controller: controller,
             cards: [
               for (final entry in shapes.entries)
-                FluidGridCard(
+                LiquidGridCard(
                   id: entry.key,
                   initialShape: entry.value,
                   child: const ColoredBox(color: Colors.blueGrey),
@@ -270,11 +270,11 @@ void main() {
     }
 
     Future<void> expectResize(WidgetTester tester,
-        FluidGridController controller, Offset press,
+        LiquidGridController controller, Offset press,
         {required String card, required CardinalEdge edge}) async {
       final gesture =
           await tester.createGesture(kind: PointerDeviceKind.mouse);
-      await gesture.down(tester.getTopLeft(find.byType(FluidGridView)) +
+      await gesture.down(tester.getTopLeft(find.byType(LiquidGridView)) +
           press);
       await tester.pump();
       for (var i = 0; i < 4; i++) {

@@ -2,56 +2,56 @@ import 'package:flutter/widgets.dart';
 
 import '../engine/content_geometry.dart';
 
-/// Publishes a card's shape-aware [FluidCardGeometry] to its content.
+/// Publishes a card's shape-aware [LiquidCardGeometry] to its content.
 ///
-/// `FluidGridView` injects one around every card's child automatically, so
+/// `LiquidGridView` injects one around every card's child automatically, so
 /// any descendant — at any depth — can adapt to the polyomino via
-/// [FluidCardScope.maybeOf]. The Fluid* content widgets (FluidContentArea,
-/// FluidRegions, FluidColumn/FluidRow, FluidText) all read it; outside a
+/// [LiquidCardScope.maybeOf]. The Liquid* content widgets (LiquidContentArea,
+/// LiquidRegions, LiquidColumn/LiquidRow, LiquidText) all read it; outside a
 /// fluid card they degrade gracefully to plain rectangular behavior.
-class FluidCardScope extends InheritedWidget {
-  const FluidCardScope({
+class LiquidCardScope extends InheritedWidget {
+  const LiquidCardScope({
     super.key,
     required this.geometry,
     required super.child,
   });
 
-  final FluidCardGeometry geometry;
+  final LiquidCardGeometry geometry;
 
-  static FluidCardGeometry? maybeOf(BuildContext context) => context
-      .dependOnInheritedWidgetOfExactType<FluidCardScope>()
+  static LiquidCardGeometry? maybeOf(BuildContext context) => context
+      .dependOnInheritedWidgetOfExactType<LiquidCardScope>()
       ?.geometry;
 
-  static FluidCardGeometry of(BuildContext context) {
+  static LiquidCardGeometry of(BuildContext context) {
     final geometry = maybeOf(context);
     assert(geometry != null,
-        'FluidCardScope.of called outside a fluid card subtree');
+        'LiquidCardScope.of called outside a fluid card subtree');
     return geometry!;
   }
 
   @override
-  bool updateShouldNotify(FluidCardScope oldWidget) =>
+  bool updateShouldNotify(LiquidCardScope oldWidget) =>
       oldWidget.geometry != geometry;
 }
 
 /// Shape-aware [Padding]: pads the child AND republishes the geometry with
 /// the padding carved off, so fluid widgets below it keep seeing spans and
 /// regions in their own coordinates. Use this instead of a plain Padding
-/// between the card and any Fluid* layout widget.
-class FluidPadding extends StatelessWidget {
-  const FluidPadding({super.key, required this.padding, required this.child});
+/// between the card and any Liquid* layout widget.
+class LiquidPadding extends StatelessWidget {
+  const LiquidPadding({super.key, required this.padding, required this.child});
 
   final EdgeInsets padding;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final geometry = FluidCardScope.maybeOf(context);
+    final geometry = LiquidCardScope.maybeOf(context);
     final padded = Padding(padding: padding, child: child);
     if (geometry == null) return padded;
     return Padding(
       padding: padding,
-      child: FluidCardScope(
+      child: LiquidCardScope(
         geometry: geometry.deflate(padding),
         child: child,
       ),
@@ -62,8 +62,8 @@ class FluidPadding extends StatelessWidget {
 /// Lays its child in the **largest rectangle fully inside the card shape**
 /// — a SafeArea for notches. The child stays rectangular but is never bitten
 /// by a concave cutout, no matter how the user reshapes the card.
-class FluidContentArea extends StatelessWidget {
-  const FluidContentArea({
+class LiquidContentArea extends StatelessWidget {
+  const LiquidContentArea({
     super.key,
     required this.child,
     this.padding = EdgeInsets.zero,
@@ -81,13 +81,13 @@ class FluidContentArea extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final geometry = FluidCardScope.maybeOf(context);
+    final geometry = LiquidCardScope.maybeOf(context);
     if (geometry == null) {
       return Padding(padding: padding, child: child);
     }
     final rect = padding.deflateRect(geometry.largestRect);
     if (rect.isEmpty) return const SizedBox.shrink();
-    Widget content = FluidCardScope(
+    Widget content = LiquidCardScope(
       geometry: geometry.cropTo(rect),
       child: child,
     );
@@ -107,18 +107,18 @@ class FluidContentArea extends StatelessWidget {
 /// [builder] is invoked once per rectangular sub-region (area-descending —
 /// region 0 is the biggest) and may return null to leave a region empty.
 /// Reshaping the card changes the region set live.
-class FluidRegions extends StatelessWidget {
-  const FluidRegions({super.key, required this.builder});
+class LiquidRegions extends StatelessWidget {
+  const LiquidRegions({super.key, required this.builder});
 
-  final Widget? Function(BuildContext context, FluidRegion region) builder;
+  final Widget? Function(BuildContext context, LiquidRegion region) builder;
 
   @override
   Widget build(BuildContext context) {
-    final geometry = FluidCardScope.maybeOf(context);
+    final geometry = LiquidCardScope.maybeOf(context);
     if (geometry == null) {
       // Outside a fluid card the whole box is one region.
       return LayoutBuilder(builder: (context, constraints) {
-        final region = FluidRegion(
+        final region = LiquidRegion(
           index: 0,
           rect: Offset.zero & constraints.biggest,
           cellWidth: 1,
@@ -135,7 +135,7 @@ class FluidRegions extends StatelessWidget {
             if (builder(context, region) case final child?)
               Positioned.fromRect(
                 rect: region.rect,
-                child: FluidCardScope(
+                child: LiquidCardScope(
                   geometry: geometry.cropTo(region.rect),
                   child: child,
                 ),

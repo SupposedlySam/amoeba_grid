@@ -1,7 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fluid_draggable_grid/fluid_draggable_grid.dart';
+import 'package:liquid_grid/liquid_grid.dart';
 
 class _AllDevices extends MaterialScrollBehavior {
   const _AllDevices();
@@ -12,17 +12,17 @@ class _AllDevices extends MaterialScrollBehavior {
 void main() {
   testWidgets('mouse drag over InkWell content, small increments',
       (tester) async {
-    const config = FluidGridConfig(
+    const config = LiquidGridConfig(
         columns: 8, rows: 8, gap: 10, minCellExtent: 80, maxCellExtent: 80);
-    final controller = FluidGridController(config: config);
+    final controller = LiquidGridController(config: config);
 
     await tester.pumpWidget(MaterialApp(
       scrollBehavior: const _AllDevices(),
       home: Scaffold(
-        body: FluidGridView(
+        body: LiquidGridView(
           controller: controller,
           cards: [
-            FluidGridCard(
+            LiquidGridCard(
               id: 'a',
               initialShape: CardShape.rect(0, 0, 2, 2),
               child: InkWell(

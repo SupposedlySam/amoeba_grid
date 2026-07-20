@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-/// Immutable configuration for a [FluidGridView], supplied once at app init.
+/// Immutable configuration for a [LiquidGridView], supplied once at app init.
 ///
 /// The grid is a fixed field of [columns] x [rows] square cells. Each cell's
 /// pixel extent is resolved responsively per viewport: the grid tries to fit
@@ -8,8 +8,8 @@ import 'package:flutter/foundation.dart';
 /// [maxCellExtent]. When the viewport is too small to fit all columns at
 /// [minCellExtent] the grid overflows and can be panned in both axes.
 @immutable
-class FluidGridConfig {
-  const FluidGridConfig({
+class LiquidGridConfig {
+  const LiquidGridConfig({
     this.columns = 8,
     this.rows = 12,
     this.minCellExtent = 72,
@@ -67,7 +67,7 @@ class FluidGridConfig {
     return bucket;
   }
 
-  FluidGridConfig copyWith({
+  LiquidGridConfig copyWith({
     int? columns,
     int? rows,
     double? minCellExtent,
@@ -77,7 +77,7 @@ class FluidGridConfig {
     double? outsideCornerRadius,
     List<double>? breakpoints,
   }) {
-    return FluidGridConfig(
+    return LiquidGridConfig(
       columns: columns ?? this.columns,
       rows: rows ?? this.rows,
       minCellExtent: minCellExtent ?? this.minCellExtent,
@@ -91,7 +91,7 @@ class FluidGridConfig {
 
   @override
   bool operator ==(Object other) {
-    return other is FluidGridConfig &&
+    return other is LiquidGridConfig &&
         other.columns == columns &&
         other.rows == rows &&
         other.minCellExtent == minCellExtent &&

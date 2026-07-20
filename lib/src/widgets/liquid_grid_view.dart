@@ -15,8 +15,8 @@ import 'card_chrome.dart';
 /// One dashboard card: programmatic identity, initial footprint, content.
 /// User shaping (persisted per width bucket) overrides [initialShape].
 @immutable
-class FluidGridCard {
-  const FluidGridCard({
+class LiquidGridCard {
+  const LiquidGridCard({
     required this.id,
     required this.initialShape,
     required this.child,
@@ -35,23 +35,23 @@ class FluidGridCard {
 /// resized strip-by-strip into polyomino silhouettes, and pushed through
 /// each other amoeba-style. See the package README for the interaction
 /// model.
-class FluidGridView extends StatefulWidget {
-  const FluidGridView({
+class LiquidGridView extends StatefulWidget {
+  const LiquidGridView({
     super.key,
     required this.controller,
     required this.cards,
     this.style,
   });
 
-  final FluidGridController controller;
-  final List<FluidGridCard> cards;
-  final FluidGridStyle? style;
+  final LiquidGridController controller;
+  final List<LiquidGridCard> cards;
+  final LiquidGridStyle? style;
 
   @override
-  State<FluidGridView> createState() => _FluidGridViewState();
+  State<LiquidGridView> createState() => _LiquidGridViewState();
 }
 
-class _FluidGridViewState extends State<FluidGridView>
+class _LiquidGridViewState extends State<LiquidGridView>
     with TickerProviderStateMixin {
   final ScrollController _horizontal = ScrollController();
   final ScrollController _vertical = ScrollController();
@@ -81,7 +81,7 @@ class _FluidGridViewState extends State<FluidGridView>
       {for (final card in widget.cards) card.id: card.initialShape};
 
   @override
-  void didUpdateWidget(FluidGridView oldWidget) {
+  void didUpdateWidget(LiquidGridView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
       oldWidget.controller.removeListener(_onControllerChanged);
@@ -122,11 +122,11 @@ class _FluidGridViewState extends State<FluidGridView>
 
     if (cardId != _hoveredCardId || hit != _hoveredHandle) {
       if (hit != null && hit != _hoveredHandle) {
-        FluidGridDiagnostics.emit(FluidGridEventKind.handleHoverEnter,
+        LiquidGridDiagnostics.emit(LiquidGridEventKind.handleHoverEnter,
             'handle hover', {'handle': hit.debugLabel});
         _handleReveal.forward(from: _hoveredHandle == null ? 0 : 0.4);
       } else if (hit == null && _hoveredHandle != null) {
-        FluidGridDiagnostics.emit(FluidGridEventKind.handleHoverExit,
+        LiquidGridDiagnostics.emit(LiquidGridEventKind.handleHoverExit,
             'handle hover exit', {'handle': _hoveredHandle!.debugLabel});
         _handleReveal.reverse();
       }
@@ -149,7 +149,7 @@ class _FluidGridViewState extends State<FluidGridView>
   }
 
   /// Cards for hit testing, topmost first.
-  Iterable<FluidGridCard> _orderedCards() => widget.cards.reversed;
+  Iterable<LiquidGridCard> _orderedCards() => widget.cards.reversed;
 
   // --- Drag ----------------------------------------------------------------
 
@@ -161,7 +161,7 @@ class _FluidGridViewState extends State<FluidGridView>
 
   bool _capturePanDown(Offset point, GridMetrics metrics) {
     final interaction = _interactionAt(point, metrics);
-    FluidGridDiagnostics.emit(FluidGridEventKind.pointerDown, 'pointer down', {
+    LiquidGridDiagnostics.emit(LiquidGridEventKind.pointerDown, 'pointer down', {
       'at': '(${point.dx.toStringAsFixed(0)},${point.dy.toStringAsFixed(0)})',
       'hit': interaction == null
           ? 'none'
@@ -194,7 +194,7 @@ class _FluidGridViewState extends State<FluidGridView>
     final grab = _pendingGrab;
     _pendingGrab = null;
     if (grab == null) {
-      FluidGridDiagnostics.emit(FluidGridEventKind.gestureRejected,
+      LiquidGridDiagnostics.emit(LiquidGridEventKind.gestureRejected,
           'pan accepted but no pending grab');
       return;
     }
@@ -279,7 +279,7 @@ class _FluidGridViewState extends State<FluidGridView>
       position.jumpTo((position.pixels + dy)
           .clamp(position.minScrollExtent, position.maxScrollExtent));
     }
-    FluidGridDiagnostics.emit(FluidGridEventKind.edgeAutoScroll,
+    LiquidGridDiagnostics.emit(LiquidGridEventKind.edgeAutoScroll,
         'edge auto-scroll', {'dx': dx, 'dy': dy});
     widget.controller.updateDrag(viewportPoint + _scrollOffset());
   }
@@ -289,7 +289,7 @@ class _FluidGridViewState extends State<FluidGridView>
   @override
   Widget build(BuildContext context) {
     final style =
-        widget.style ?? FluidGridStyle.fromTheme(Theme.of(context));
+        widget.style ?? LiquidGridStyle.fromTheme(Theme.of(context));
     return LayoutBuilder(
       builder: (context, constraints) {
         final metrics = GridMetrics.resolve(
@@ -334,12 +334,12 @@ class _FluidGridViewState extends State<FluidGridView>
     );
   }
 
-  Widget _buildCanvas(GridMetrics metrics, FluidGridStyle style) {
+  Widget _buildCanvas(GridMetrics metrics, LiquidGridStyle style) {
     final controller = widget.controller;
     final session = controller.session;
 
     final cards = <Widget>[];
-    FluidGridCard? aggressorCard;
+    LiquidGridCard? aggressorCard;
     for (final card in widget.cards) {
       if (session?.cardId == card.id) {
         aggressorCard = card;
@@ -425,8 +425,8 @@ class _FluidGridViewState extends State<FluidGridView>
     );
   }
 
-  Widget _buildCard(FluidGridCard card, GridMetrics metrics,
-      FluidGridStyle style, DragSession? session) {
+  Widget _buildCard(LiquidGridCard card, GridMetrics metrics,
+      LiquidGridStyle style, DragSession? session) {
     final isAggressor = session != null && session.cardId == card.id;
     final isMoving = isAggressor && session.kind == DragKind.move;
 
@@ -441,7 +441,7 @@ class _FluidGridViewState extends State<FluidGridView>
 
     return Positioned.fill(
       key: ValueKey(card.id),
-      child: FluidCardSurface(
+      child: LiquidCardSurface(
         shape: shape,
         metrics: metrics,
         style: style,
@@ -476,14 +476,14 @@ class _CardPanRecognizer extends PanGestureRecognizer {
 
   @override
   void acceptGesture(int pointer) {
-    FluidGridDiagnostics.emit(
-        FluidGridEventKind.gestureAccepted, 'card pan won the arena');
+    LiquidGridDiagnostics.emit(
+        LiquidGridEventKind.gestureAccepted, 'card pan won the arena');
     super.acceptGesture(pointer);
   }
 
   @override
   void rejectGesture(int pointer) {
-    FluidGridDiagnostics.emit(FluidGridEventKind.gestureRejected,
+    LiquidGridDiagnostics.emit(LiquidGridEventKind.gestureRejected,
         'card pan lost the arena (another recognizer took the drag)');
     super.rejectGesture(pointer);
   }

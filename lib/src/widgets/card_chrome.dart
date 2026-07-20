@@ -6,13 +6,13 @@ import '../foundation/cell.dart';
 import '../engine/content_geometry.dart';
 import '../engine/outline.dart';
 import '../engine/outline_cache.dart';
-import 'fluid_card_scope.dart';
+import 'liquid_card_scope.dart';
 
 /// Visual styling for the grid chrome. Card *content* styles itself; this
 /// covers the painted card surfaces, handles, previews, and backdrop.
 @immutable
-class FluidGridStyle {
-  const FluidGridStyle({
+class LiquidGridStyle {
+  const LiquidGridStyle({
     required this.cardColor,
     required this.cardBorderColor,
     required this.accentColor,
@@ -22,9 +22,9 @@ class FluidGridStyle {
   });
 
   /// Dark-first defaults tuned for a bento-style dashboard.
-  factory FluidGridStyle.fromTheme(ThemeData theme) {
+  factory LiquidGridStyle.fromTheme(ThemeData theme) {
     final scheme = theme.colorScheme;
-    return FluidGridStyle(
+    return LiquidGridStyle(
       cardColor: scheme.surfaceContainerHigh,
       cardBorderColor: scheme.outlineVariant.withValues(alpha: 0.35),
       accentColor: scheme.primary,
@@ -47,7 +47,7 @@ class GridBackdropPainter extends CustomPainter {
   GridBackdropPainter(this.metrics, this.style);
 
   final GridMetrics metrics;
-  final FluidGridStyle style;
+  final LiquidGridStyle style;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -75,7 +75,7 @@ class CardChromePainter extends CustomPainter {
   });
 
   final Path path;
-  final FluidGridStyle style;
+  final LiquidGridStyle style;
   final Color color;
 
   /// 0..1: how "picked up" the card is.
@@ -117,7 +117,7 @@ class PreviewPainter extends CustomPainter {
   PreviewPainter({required this.path, required this.style});
 
   final Path path;
-  final FluidGridStyle style;
+  final LiquidGridStyle style;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -153,7 +153,7 @@ class HandlesPainter extends CustomPainter {
   final List<GridHandle> handles;
   final GridHandle? hovered;
   final double reveal;
-  final FluidGridStyle style;
+  final LiquidGridStyle style;
   final GridMetrics metrics;
 
   @override
@@ -208,8 +208,8 @@ class HandlesPainter extends CustomPainter {
 
 /// One card: morphs organically between cell-quantized shapes and hosts the
 /// developer-provided content, clipped to the live outline.
-class FluidCardSurface extends StatefulWidget {
-  const FluidCardSurface({
+class LiquidCardSurface extends StatefulWidget {
+  const LiquidCardSurface({
     super.key,
     required this.shape,
     required this.metrics,
@@ -223,7 +223,7 @@ class FluidCardSurface extends StatefulWidget {
 
   final CardShape shape;
   final GridMetrics metrics;
-  final FluidGridStyle style;
+  final LiquidGridStyle style;
   final Color color;
 
   /// Free-floating pixel offset while this card is being moved.
@@ -236,10 +236,10 @@ class FluidCardSurface extends StatefulWidget {
   final Duration morphDuration;
 
   @override
-  State<FluidCardSurface> createState() => _FluidCardSurfaceState();
+  State<LiquidCardSurface> createState() => _LiquidCardSurfaceState();
 }
 
-class _FluidCardSurfaceState extends State<FluidCardSurface>
+class _LiquidCardSurfaceState extends State<LiquidCardSurface>
     with SingleTickerProviderStateMixin {
   late final AnimationController _morph = AnimationController(
     vsync: this,
@@ -252,8 +252,8 @@ class _FluidCardSurfaceState extends State<FluidCardSurface>
   Path? _fromPath;
   late Rect _fromBounds = _bounds(_target);
   late Rect _toBounds = _fromBounds;
-  late FluidCardGeometry _geometry =
-      FluidCardGeometry.compute(_target, widget.metrics);
+  late LiquidCardGeometry _geometry =
+      LiquidCardGeometry.compute(_target, widget.metrics);
 
   Path _outline(CardShape shape) =>
       OutlineCache.instance.outlineFor(shape, widget.metrics).paths;
@@ -277,7 +277,7 @@ class _FluidCardSurfaceState extends State<FluidCardSurface>
           .shift(widget.visualOffset);
 
   @override
-  void didUpdateWidget(FluidCardSurface oldWidget) {
+  void didUpdateWidget(LiquidCardSurface oldWidget) {
     super.didUpdateWidget(oldWidget);
     final metricsChanged = oldWidget.metrics != widget.metrics;
     if (widget.shape != _target || metricsChanged) {
@@ -289,7 +289,7 @@ class _FluidCardSurfaceState extends State<FluidCardSurface>
       _target = widget.shape;
       _toPath = _outline(_target);
       _toBounds = _bounds(_target);
-      _geometry = FluidCardGeometry.compute(_target, widget.metrics);
+      _geometry = LiquidCardGeometry.compute(_target, widget.metrics);
       if (metricsChanged && oldWidget.metrics.viewportSize !=
           widget.metrics.viewportSize) {
         // Resizes retarget instantly; morphing across metric spaces looks
@@ -335,7 +335,7 @@ class _FluidCardSurfaceState extends State<FluidCardSurface>
               rect: contentRect,
               child: ClipPath(
                 clipper: _ShiftedPathClipper(path, contentRect.topLeft),
-                child: FluidCardScope(
+                child: LiquidCardScope(
                   geometry: _geometry,
                   child: widget.child,
                 ),

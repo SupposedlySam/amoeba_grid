@@ -67,20 +67,20 @@ class DragSession {
 /// it to observe layout state. Committed shapes resolve as:
 /// user override for the active width bucket (mobile-first fallback through
 /// smaller buckets) -> programmatic initial shape.
-class FluidGridController extends ChangeNotifier {
-  FluidGridController({
+class LiquidGridController extends ChangeNotifier {
+  LiquidGridController({
     required this.config,
-    FluidGridStorage? storage,
+    LiquidGridStorage? storage,
     String? storageKey,
-  }) : _store = FluidGridLayoutStore(
-          storage ?? FluidGridMemoryStorage(),
-          storageKey: storageKey ?? FluidGridLayoutStore.defaultKey,
+  }) : _store = LiquidGridLayoutStore(
+          storage ?? LiquidGridMemoryStorage(),
+          storageKey: storageKey ?? LiquidGridLayoutStore.defaultKey,
         );
 
-  final FluidGridConfig config;
-  final FluidGridLayoutStore _store;
+  final LiquidGridConfig config;
+  final LiquidGridLayoutStore _store;
 
-  FluidGridLayoutData _layoutData = const FluidGridLayoutData.empty();
+  LiquidGridLayoutData _layoutData = const LiquidGridLayoutData.empty();
   final Map<String, CardShape> _initialShapes = {};
   final Map<String, CardShape> _committed = {};
 
@@ -131,7 +131,7 @@ class FluidGridController extends ChangeNotifier {
     final bucketChanged = previous == null ||
         config.bucketFor(previous.viewportSize.width) !=
             config.bucketFor(metrics.viewportSize.width);
-    FluidGridDiagnostics.emit(FluidGridEventKind.metricsResolved,
+    LiquidGridDiagnostics.emit(LiquidGridEventKind.metricsResolved,
         'metrics resolved', {
       'cellExtent': metrics.cellExtent,
       'viewport': '${metrics.viewportSize}',
@@ -182,7 +182,7 @@ class FluidGridController extends ChangeNotifier {
       originShape: origin,
       startPointer: pointer,
     )..pointer = pointer;
-    FluidGridDiagnostics.emit(FluidGridEventKind.dragStart, 'move start',
+    LiquidGridDiagnostics.emit(LiquidGridEventKind.dragStart, 'move start',
         {'card': cardId, 'origin': '$origin'});
     notifyListeners();
   }
@@ -198,7 +198,7 @@ class FluidGridController extends ChangeNotifier {
       startPointer: pointer,
       handle: handle,
     )..pointer = pointer;
-    FluidGridDiagnostics.emit(FluidGridEventKind.dragStart, 'resize start',
+    LiquidGridDiagnostics.emit(LiquidGridEventKind.dragStart, 'resize start',
         {'card': handle.cardId, 'handle': handle.debugLabel});
     notifyListeners();
   }
@@ -217,8 +217,8 @@ class FluidGridController extends ChangeNotifier {
     session.lastPreview = previousPreview;
 
     if (session.preview != previousPreview) {
-      FluidGridDiagnostics.emit(
-          FluidGridEventKind.previewChanged, 'preview snapped', {
+      LiquidGridDiagnostics.emit(
+          LiquidGridEventKind.previewChanged, 'preview snapped', {
         'card': session.cardId,
         'cells': session.preview.cells.length,
       });
@@ -284,7 +284,7 @@ class FluidGridController extends ChangeNotifier {
 
       final entryEdge = session.entryEdges.putIfAbsent(entry.key, () {
         final edge = _entryEdgeFor(committed, session, approach);
-        FluidGridDiagnostics.emit(FluidGridEventKind.submissiveTrimmed,
+        LiquidGridDiagnostics.emit(LiquidGridEventKind.submissiveTrimmed,
             'contact', {'card': entry.key, 'entryEdge': edge.name});
         return edge;
       });
@@ -294,7 +294,7 @@ class FluidGridController extends ChangeNotifier {
         session.submissives[entry.key] = SubmissiveState(
             entryEdge: entryEdge, shape: trimmed, relocated: false);
         if (previous[entry.key]?.shape != trimmed) {
-          FluidGridDiagnostics.emit(FluidGridEventKind.submissiveTrimmed,
+          LiquidGridDiagnostics.emit(LiquidGridEventKind.submissiveTrimmed,
               'trimmed', {'card': entry.key, 'cells': trimmed.cells.length});
         }
         continue;
@@ -308,10 +308,10 @@ class FluidGridController extends ChangeNotifier {
         relocatedCells.addAll(relocated.cells);
         session.submissives[entry.key] = SubmissiveState(
             entryEdge: entryEdge, shape: relocated, relocated: true);
-        FluidGridDiagnostics.emit(FluidGridEventKind.submissiveRelocated,
+        LiquidGridDiagnostics.emit(LiquidGridEventKind.submissiveRelocated,
             'relocated', {'card': entry.key, 'edge': entryEdge.opposite.name});
       } else {
-        FluidGridDiagnostics.emit(FluidGridEventKind.submissiveRelocated,
+        LiquidGridDiagnostics.emit(LiquidGridEventKind.submissiveRelocated,
             'no room to relocate; reverting', {'card': entry.key});
       }
     }
@@ -336,7 +336,7 @@ class FluidGridController extends ChangeNotifier {
 
     for (final id in previous.keys) {
       if (!session.submissives.containsKey(id)) {
-        FluidGridDiagnostics.emit(FluidGridEventKind.submissiveReverted,
+        LiquidGridDiagnostics.emit(LiquidGridEventKind.submissiveReverted,
             'no longer overlapped; reverted', {'card': id});
       }
     }
@@ -395,7 +395,7 @@ class FluidGridController extends ChangeNotifier {
     }
     _committed.addAll(changed);
 
-    FluidGridDiagnostics.emit(FluidGridEventKind.layoutCommitted,
+    LiquidGridDiagnostics.emit(LiquidGridEventKind.layoutCommitted,
         'drag committed', {
       'aggressor': session.cardId,
       'submissives': session.submissives.keys.toList(),
@@ -409,8 +409,8 @@ class FluidGridController extends ChangeNotifier {
 
   void cancelDrag() {
     if (_session == null) return;
-    FluidGridDiagnostics.emit(
-        FluidGridEventKind.dragCancelled, 'drag cancelled',
+    LiquidGridDiagnostics.emit(
+        LiquidGridEventKind.dragCancelled, 'drag cancelled',
         {'card': _session!.cardId});
     _session = null;
     notifyListeners();
@@ -418,7 +418,7 @@ class FluidGridController extends ChangeNotifier {
 
   /// Clears every persisted override and returns to programmatic shapes.
   Future<void> resetLayout() async {
-    _layoutData = const FluidGridLayoutData.empty();
+    _layoutData = const LiquidGridLayoutData.empty();
     await _store.save(_layoutData);
     _recomputeCommitted();
   }

@@ -14,8 +14,8 @@ import 'outline_cache.dart';
 /// rows/columns with identical runs merge into one band bridging the gap,
 /// matching the card's visual interior.
 @immutable
-class FluidBand {
-  const FluidBand({
+class LiquidBand {
+  const LiquidBand({
     required this.start,
     required this.end,
     required this.spans,
@@ -35,8 +35,8 @@ class FluidBand {
 /// rectangle decomposition. Regions are sorted by area descending;
 /// region 0 is the largest inscribed rectangle.
 @immutable
-class FluidRegion {
-  const FluidRegion({
+class LiquidRegion {
+  const LiquidRegion({
     required this.index,
     required this.rect,
     required this.cellWidth,
@@ -56,10 +56,10 @@ class FluidRegion {
 
 /// Shape-aware layout data for one card, in card-local pixels (origin at
 /// the shape's bounding rect top-left). Published to card content by
-/// `FluidCardScope`; consumed by the Fluid* content widgets.
+/// `LiquidCardScope`; consumed by the Liquid* content widgets.
 @immutable
-class FluidCardGeometry {
-  const FluidCardGeometry._({
+class LiquidCardGeometry {
+  const LiquidCardGeometry._({
     required this.shape,
     required this.metrics,
     required this.size,
@@ -71,7 +71,7 @@ class FluidCardGeometry {
     required this.insets,
   });
 
-  factory FluidCardGeometry.compute(CardShape shape, GridMetrics metrics) {
+  factory LiquidCardGeometry.compute(CardShape shape, GridMetrics metrics) {
     final bounds = metrics.shapeBounds(shape);
     final origin = bounds.topLeft;
     final path = OutlineCache.instance
@@ -79,7 +79,7 @@ class FluidCardGeometry {
         .paths
         .shift(-origin);
     final regions = _decompose(shape, metrics, origin);
-    return FluidCardGeometry._(
+    return LiquidCardGeometry._(
       shape: shape,
       metrics: metrics,
       size: bounds.size,
@@ -101,26 +101,26 @@ class FluidCardGeometry {
   /// The card outline in local coordinates (clip-accurate at rest).
   final Path path;
 
-  /// Bands for vertical flow (FluidColumn, FluidText).
-  final List<FluidBand> rowBands;
+  /// Bands for vertical flow (LiquidColumn, LiquidText).
+  final List<LiquidBand> rowBands;
 
-  /// Bands for horizontal flow (FluidRow).
-  final List<FluidBand> columnBands;
+  /// Bands for horizontal flow (LiquidRow).
+  final List<LiquidBand> columnBands;
 
   /// Largest rectangle fully inside the polyomino — the "safe area" clear
   /// of every notch.
   final Rect largestRect;
 
   /// Maximal-rectangle decomposition of the whole shape, area-descending.
-  final List<FluidRegion> regions;
+  final List<LiquidRegion> regions;
 
-  /// Accumulated padding applied by FluidPadding / cropping, relative to
+  /// Accumulated padding applied by LiquidPadding / cropping, relative to
   /// the card's original content box.
   final EdgeInsets insets;
 
   /// A copy with [padding] carved off every side: local origin moves to
   /// (padding.left, padding.top), spans and regions are trimmed, and
-  /// anything that falls outside disappears. Used by FluidPadding so nested
+  /// anything that falls outside disappears. Used by LiquidPadding so nested
   /// fluid widgets keep seeing correct geometry.
   ///
   /// With [fromOutline] (the default), padding is applied against the card
@@ -128,7 +128,7 @@ class FluidCardGeometry {
   /// open card edge — including interior edges created by notches and steps
   /// — is inset, so content respects the padding on every card edge. Sides
   /// facing the card interior (bridged gaps, other regions) are untouched.
-  FluidCardGeometry deflate(EdgeInsets padding, {bool fromOutline = true}) {
+  LiquidCardGeometry deflate(EdgeInsets padding, {bool fromOutline = true}) {
     final shifted = Offset(-padding.left, -padding.top);
     final newSize = Size(
       (size.width - padding.horizontal).clamp(0.0, double.infinity),
@@ -143,8 +143,8 @@ class FluidCardGeometry {
       return (moved.width <= 0 || moved.height <= 0) ? null : moved;
     }
 
-    List<FluidBand> clipBands(List<FluidBand> bands, Axis axis) {
-      final result = <FluidBand>[];
+    List<LiquidBand> clipBands(List<LiquidBand> bands, Axis axis) {
+      final result = <LiquidBand>[];
       for (final band in bands) {
         final spans = <Rect>[];
         for (final span in band.spans) {
@@ -161,16 +161,16 @@ class FluidCardGeometry {
           end = math.max(
               end, axis == Axis.vertical ? span.bottom : span.right);
         }
-        result.add(FluidBand(start: start, end: end, spans: spans));
+        result.add(LiquidBand(start: start, end: end, spans: spans));
       }
       return result;
     }
 
-    final newRegions = <FluidRegion>[];
+    final newRegions = <LiquidRegion>[];
     for (final region in regions) {
       final clipped = clip(region.rect);
       if (clipped == null) continue;
-      newRegions.add(FluidRegion(
+      newRegions.add(LiquidRegion(
         index: newRegions.length,
         rect: clipped,
         cellWidth: region.cellWidth,
@@ -184,14 +184,14 @@ class FluidCardGeometry {
     });
     final reindexed = [
       for (final (i, r) in newRegions.indexed)
-        FluidRegion(
+        LiquidRegion(
             index: i,
             rect: r.rect,
             cellWidth: r.cellWidth,
             cellHeight: r.cellHeight),
     ];
 
-    return FluidCardGeometry._(
+    return LiquidCardGeometry._(
       shape: shape,
       metrics: metrics,
       size: newSize,
@@ -212,10 +212,10 @@ class FluidCardGeometry {
   }
 
   /// A copy scoped to a rectangular window of the current box — used when a
-  /// child is placed inside a region or the largest rect, so nested fluid
+  /// child is placed inside a region or the largest rect, so nested liquid
   /// widgets see plain rectangular geometry. Pure windowing: no
   /// outline-based insets.
-  FluidCardGeometry cropTo(Rect window) => deflate(
+  LiquidCardGeometry cropTo(Rect window) => deflate(
         EdgeInsets.fromLTRB(
           window.left,
           window.top,
@@ -254,7 +254,7 @@ class FluidCardGeometry {
 
   @override
   bool operator ==(Object other) =>
-      other is FluidCardGeometry &&
+      other is LiquidCardGeometry &&
       other.shape == shape &&
       other.metrics == metrics &&
       other.size == size &&
@@ -268,7 +268,7 @@ class FluidCardGeometry {
   /// Contiguous runs of shape cells per row (vertical) or column
   /// (horizontal), merged across adjacent lines with identical runs so a
   /// band spans the bridged gap inside the card.
-  static List<FluidBand> _bands(
+  static List<LiquidBand> _bands(
       CardShape shape, GridMetrics metrics, Offset origin, Axis axis) {
     final vertical = axis == Axis.vertical;
     final lineStart = vertical ? shape.minRow : shape.minCol;
@@ -294,7 +294,7 @@ class FluidCardGeometry {
     Rect lineCellRect(int line, int cross) => metrics.cellRect(
         vertical ? CellIndex(cross, line) : CellIndex(line, cross));
 
-    final bands = <FluidBand>[];
+    final bands = <LiquidBand>[];
     List<(int, int)>? openRuns;
     var openStartLine = 0;
     var lastLine = 0;
@@ -317,7 +317,7 @@ class FluidCardGeometry {
             ? Rect.fromLTRB(aRect.left, start, bRect.right, end)
             : Rect.fromLTRB(start, aRect.top, end, bRect.bottom));
       }
-      bands.add(FluidBand(start: start, end: end, spans: spans));
+      bands.add(LiquidBand(start: start, end: end, spans: spans));
       openRuns = null;
     }
 
@@ -344,14 +344,14 @@ class FluidCardGeometry {
 
   /// Greedy maximal-rectangle decomposition: repeatedly peel the largest
   /// inscribed rectangle (histogram method) off the remaining cells.
-  static List<FluidRegion> _decompose(
+  static List<LiquidRegion> _decompose(
       CardShape shape, GridMetrics metrics, Offset origin) {
     final remaining = Set.of(shape.cells);
     final minCol = shape.minCol, minRow = shape.minRow;
     final cols = shape.maxCol - minCol + 1;
     final rows = shape.maxRow - minRow + 1;
 
-    final regions = <FluidRegion>[];
+    final regions = <LiquidRegion>[];
     while (remaining.isNotEmpty && regions.length < 24) {
       final block = _largestBlock(remaining, minCol, minRow, cols, rows);
       final (c0, r0, w, h) = block;
@@ -362,7 +362,7 @@ class FluidCardGeometry {
       }
       final tl = metrics.cellRect(CellIndex(c0, r0));
       final br = metrics.cellRect(CellIndex(c0 + w - 1, r0 + h - 1));
-      regions.add(FluidRegion(
+      regions.add(LiquidRegion(
         index: 0,
         rect: Rect.fromLTRB(tl.left, tl.top, br.right, br.bottom)
             .shift(-origin),
@@ -374,7 +374,7 @@ class FluidCardGeometry {
         .compareTo(a.cellWidth * a.cellHeight));
     return [
       for (final (i, r) in regions.indexed)
-        FluidRegion(
+        LiquidRegion(
             index: i,
             rect: r.rect,
             cellWidth: r.cellWidth,

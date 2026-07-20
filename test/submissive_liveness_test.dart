@@ -1,17 +1,17 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fluid_draggable_grid/fluid_draggable_grid.dart';
-import 'package:fluid_draggable_grid/src/engine/handles.dart';
-import 'package:fluid_draggable_grid/src/widgets/card_chrome.dart';
+import 'package:liquid_grid/liquid_grid.dart';
+import 'package:liquid_grid/src/engine/handles.dart';
+import 'package:liquid_grid/src/widgets/card_chrome.dart';
 
 void main() {
-  const config = FluidGridConfig(
+  const config = LiquidGridConfig(
       columns: 12, rows: 12, minCellExtent: 100, maxCellExtent: 100,
       gap: 12, insideCornerRadius: 10, outsideCornerRadius: 20);
 
   test('corner drag covering a neighbor relocates it live (controller)', () {
-    final controller = FluidGridController(config: config)
+    final controller = LiquidGridController(config: config)
       ..registerCards({
         'agg': CardShape.rect(1, 1, 1, 1),
         'side': CardShape.rect(3, 1, 1, 1),
@@ -33,17 +33,17 @@ void main() {
 
   testWidgets('mid-drag, the submissive card surface renders its retreat',
       (tester) async {
-    final controller = FluidGridController(config: config);
+    final controller = LiquidGridController(config: config);
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
-        body: FluidGridView(
+        body: LiquidGridView(
           controller: controller,
           cards: [
-            FluidGridCard(
+            LiquidGridCard(
                 id: 'agg',
                 initialShape: CardShape.rect(1, 1, 1, 1),
                 child: const SizedBox()),
-            FluidGridCard(
+            LiquidGridCard(
                 id: 'side',
                 initialShape: CardShape.rect(3, 1, 1, 1),
                 child: const SizedBox()),
@@ -65,10 +65,10 @@ void main() {
       await tester.pump(const Duration(milliseconds: 8));
     }
 
-    // Mid-drag: find the FluidCardSurface rendering the submissive and
+    // Mid-drag: find the LiquidCardSurface rendering the submissive and
     // check the shape it was handed.
     final surfaces =
-        tester.widgetList<FluidCardSurface>(find.byType(FluidCardSurface));
+        tester.widgetList<LiquidCardSurface>(find.byType(LiquidCardSurface));
     final relocated = controller.session!.submissives['side']!.shape;
     expect(
         surfaces.any((s) => s.shape == relocated), isTrue,

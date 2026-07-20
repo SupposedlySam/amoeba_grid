@@ -1,6 +1,6 @@
 {
-    "name": "fluid_draggable_grid_example",
-    "short_name": "fluid_draggable_grid_example",
+    "name": "liquid_grid_example",
+    "short_name": "liquid_grid_example",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

@@ -11,14 +11,14 @@ import 'diagnostics.dart';
 /// The package stays plugin-free: implement this with whatever your app
 /// already uses (`shared_preferences`, a file, a server). The demo app ships
 /// a `shared_preferences` implementation.
-abstract interface class FluidGridStorage {
+abstract interface class LiquidGridStorage {
   Future<String?> read(String key);
   Future<void> write(String key, String value);
 }
 
 /// In-memory storage; layouts survive rebuilds but not app restarts.
 /// Useful as a default and in tests.
-class FluidGridMemoryStorage implements FluidGridStorage {
+class LiquidGridMemoryStorage implements LiquidGridStorage {
   final Map<String, String> _values = {};
 
   @override
@@ -37,10 +37,10 @@ class FluidGridMemoryStorage implements FluidGridStorage {
 /// narrow window carries up to wider windows until the user overrides it
 /// there too — mobile-first, like CSS breakpoints.
 @immutable
-class FluidGridLayoutData {
-  const FluidGridLayoutData(this.overrides);
+class LiquidGridLayoutData {
+  const LiquidGridLayoutData(this.overrides);
 
-  const FluidGridLayoutData.empty() : overrides = const {};
+  const LiquidGridLayoutData.empty() : overrides = const {};
 
   /// breakpoint -> cardId -> shape
   final Map<double, Map<String, CardShape>> overrides;
@@ -48,7 +48,7 @@ class FluidGridLayoutData {
   static const int _version = 1;
 
   CardShape? resolve(String cardId, double viewportWidth,
-      FluidGridConfig config) {
+      LiquidGridConfig config) {
     for (final b in config.breakpoints.reversed) {
       if (b > viewportWidth) continue;
       final shape = overrides[b]?[cardId];
@@ -58,13 +58,13 @@ class FluidGridLayoutData {
   }
 
   /// Returns a copy with [shapes] written into [bucket].
-  FluidGridLayoutData withBucketShapes(
+  LiquidGridLayoutData withBucketShapes(
       double bucket, Map<String, CardShape> shapes) {
     final next = {
       for (final e in overrides.entries) e.key: Map.of(e.value),
     };
     (next[bucket] ??= {}).addAll(shapes);
-    return FluidGridLayoutData(next);
+    return LiquidGridLayoutData(next);
   }
 
   String encode() => jsonEncode({
@@ -78,10 +78,10 @@ class FluidGridLayoutData {
         },
       });
 
-  static FluidGridLayoutData decode(String json) {
+  static LiquidGridLayoutData decode(String json) {
     final root = jsonDecode(json) as Map<String, dynamic>;
     final rawOverrides = root['overrides'] as Map<String, dynamic>? ?? {};
-    return FluidGridLayoutData({
+    return LiquidGridLayoutData({
       for (final e in rawOverrides.entries)
         double.parse(e.key): {
           for (final card in (e.value as Map<String, dynamic>).entries)
@@ -92,32 +92,32 @@ class FluidGridLayoutData {
 }
 
 /// Load/save helper shared by the controller.
-class FluidGridLayoutStore {
-  FluidGridLayoutStore(this.storage, {this.storageKey = defaultKey});
+class LiquidGridLayoutStore {
+  LiquidGridLayoutStore(this.storage, {this.storageKey = defaultKey});
 
-  static const String defaultKey = 'fluid_draggable_grid.layout.v1';
+  static const String defaultKey = 'liquid_grid.layout.v1';
 
-  final FluidGridStorage storage;
+  final LiquidGridStorage storage;
   final String storageKey;
 
-  Future<FluidGridLayoutData> load() async {
+  Future<LiquidGridLayoutData> load() async {
     try {
       final raw = await storage.read(storageKey);
-      if (raw == null) return const FluidGridLayoutData.empty();
-      final data = FluidGridLayoutData.decode(raw);
-      FluidGridDiagnostics.emit(FluidGridEventKind.layoutLoaded,
+      if (raw == null) return const LiquidGridLayoutData.empty();
+      final data = LiquidGridLayoutData.decode(raw);
+      LiquidGridDiagnostics.emit(LiquidGridEventKind.layoutLoaded,
           'loaded persisted layout', {'buckets': data.overrides.keys.toList()});
       return data;
     } catch (error) {
-      FluidGridDiagnostics.emit(FluidGridEventKind.layoutLoaded,
+      LiquidGridDiagnostics.emit(LiquidGridEventKind.layoutLoaded,
           'failed to load layout, starting fresh', {'error': '$error'});
-      return const FluidGridLayoutData.empty();
+      return const LiquidGridLayoutData.empty();
     }
   }
 
-  Future<void> save(FluidGridLayoutData data) async {
+  Future<void> save(LiquidGridLayoutData data) async {
     await storage.write(storageKey, data.encode());
-    FluidGridDiagnostics.emit(FluidGridEventKind.layoutSaved, 'layout saved',
+    LiquidGridDiagnostics.emit(LiquidGridEventKind.layoutSaved, 'layout saved',
         {'buckets': data.overrides.keys.toList()});
   }
 }

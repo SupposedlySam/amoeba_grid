@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:fluid_draggable_grid/fluid_draggable_grid.dart';
+import 'package:liquid_grid/liquid_grid.dart';
 import 'package:flutter/material.dart';
 
 /// Floating event feed showing the grid's instrumentation stream live.
@@ -13,13 +13,13 @@ class DiagnosticsConsole extends StatefulWidget {
 
 class _DiagnosticsConsoleState extends State<DiagnosticsConsole> {
   static const int _maxLines = 10;
-  final List<FluidGridEvent> _events = [];
-  StreamSubscription<FluidGridEvent>? _subscription;
+  final List<LiquidGridEvent> _events = [];
+  StreamSubscription<LiquidGridEvent>? _subscription;
 
   @override
   void initState() {
     super.initState();
-    _subscription = FluidGridDiagnostics.events.listen((event) {
+    _subscription = LiquidGridDiagnostics.events.listen((event) {
       setState(() {
         _events.add(event);
         if (_events.length > _maxLines) _events.removeAt(0);

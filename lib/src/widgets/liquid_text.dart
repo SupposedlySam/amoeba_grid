@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../engine/content_geometry.dart';
-import 'fluid_card_scope.dart';
+import 'liquid_card_scope.dart';
 
 /// Text that wraps around the card's notches — Flutter has no CSS
 /// `shape-outside`, but fluid shapes are cell-quantized, so lines are laid
@@ -10,8 +10,8 @@ import 'fluid_card_scope.dart';
 ///
 /// Trade-offs versus [Text]: no selection, greedy word wrapping, single
 /// style. Outside a fluid card it behaves like ordinary wrapped text.
-class FluidText extends LeafRenderObjectWidget {
-  const FluidText(this.text, {super.key, this.style, this.lineSpacing = 0});
+class LiquidText extends LeafRenderObjectWidget {
+  const LiquidText(this.text, {super.key, this.style, this.lineSpacing = 0});
 
   final String text;
   final TextStyle? style;
@@ -25,21 +25,21 @@ class FluidText extends LeafRenderObjectWidget {
   }
 
   @override
-  RenderFluidText createRenderObject(BuildContext context) => RenderFluidText(
+  RenderLiquidText createRenderObject(BuildContext context) => RenderLiquidText(
         text: text,
         style: _effectiveStyle(context),
         lineSpacing: lineSpacing,
-        geometry: FluidCardScope.maybeOf(context),
+        geometry: LiquidCardScope.maybeOf(context),
         textDirection: Directionality.of(context),
       );
 
   @override
-  void updateRenderObject(BuildContext context, RenderFluidText renderObject) {
+  void updateRenderObject(BuildContext context, RenderLiquidText renderObject) {
     renderObject
       ..text = text
       ..style = _effectiveStyle(context)
       ..lineSpacing = lineSpacing
-      ..geometry = FluidCardScope.maybeOf(context)
+      ..geometry = LiquidCardScope.maybeOf(context)
       ..textDirection = Directionality.of(context);
   }
 }
@@ -51,8 +51,8 @@ class _Line {
   final Offset offset;
 }
 
-class RenderFluidText extends RenderBox {
-  RenderFluidText({
+class RenderLiquidText extends RenderBox {
+  RenderLiquidText({
     required this._text,
     required this._style,
     required this._lineSpacing,
@@ -81,8 +81,8 @@ class RenderFluidText extends RenderBox {
     markNeedsLayout();
   }
 
-  FluidCardGeometry? _geometry;
-  set geometry(FluidCardGeometry? value) {
+  LiquidCardGeometry? _geometry;
+  set geometry(LiquidCardGeometry? value) {
     if (value == _geometry) return;
     _geometry = value;
     markNeedsLayout();
@@ -122,7 +122,7 @@ class RenderFluidText extends RenderBox {
 
     final bands = _geometry?.rowBands ??
         [
-          FluidBand(
+          LiquidBand(
               start: 0, end: size.height, spans: [Offset.zero & size]),
         ];
 

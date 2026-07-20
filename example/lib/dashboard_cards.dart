@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:fluid_draggable_grid/fluid_draggable_grid.dart';
+import 'package:liquid_grid/liquid_grid.dart';
 import 'package:flutter/material.dart';
 
 /// Adaptive card scaffold: full layout when there's room, compact icon+title
@@ -157,7 +157,7 @@ class WeatherCard extends StatelessWidget {
   }
 }
 
-/// Tasks flow through the card's shape with [FluidColumn]: rows narrow to
+/// Tasks flow through the card's shape with [LiquidColumn]: rows narrow to
 /// the band they land in, so carving a notch into the card reflows the list
 /// around it instead of clipping it.
 class TasksCard extends StatefulWidget {
@@ -174,15 +174,15 @@ class _TasksCardState extends State<TasksCard> {
     ('Design corner handles', true),
     ('Amoeba morph polish', false),
     ('Persistence buckets QA', false),
-    ('FluidText line breaks', false),
+    ('LiquidText line breaks', false),
   ];
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return FluidPadding(
+    return LiquidPadding(
       padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
-      child: FluidColumn(
+      child: LiquidColumn(
         spacing: 2,
         children: [
           Row(
@@ -245,13 +245,13 @@ class _TasksCardState extends State<TasksCard> {
   }
 }
 
-/// [FluidText] demo: prose wraps band by band around whatever notches you
+/// [LiquidText] demo: prose wraps band by band around whatever notches you
 /// carve into the card — Flutter's answer to CSS `shape-outside`.
 class NotesCard extends StatelessWidget {
   const NotesCard({super.key});
 
   static const _prose =
-      'Fluid cards are not rectangles. Drag a side handle and only that '
+      'Liquid cards are not rectangles. Drag a side handle and only that '
       'strip moves; pull the corner and the whole edge follows. This '
       'paragraph is laid out line by line against the free span of every '
       'band in the shape, so carve a notch into this card and watch the '
@@ -262,9 +262,9 @@ class NotesCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return FluidPadding(
+    return LiquidPadding(
       padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
-      child: FluidText(
+      child: LiquidText(
         _prose,
         style: theme.textTheme.bodySmall?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
@@ -276,7 +276,7 @@ class NotesCard extends StatelessWidget {
   }
 }
 
-/// [FluidRegions] demo: the shape's maximal-rectangle decomposition is
+/// [LiquidRegions] demo: the shape's maximal-rectangle decomposition is
 /// rendered live — reshape the card and watch the regions re-partition.
 class RegionsCard extends StatelessWidget {
   const RegionsCard({super.key});
@@ -284,9 +284,9 @@ class RegionsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return FluidPadding(
+    return LiquidPadding(
       padding: const EdgeInsets.all(10),
-      child: FluidRegions(
+      child: LiquidRegions(
         builder: (context, region) {
           final tint = Color.lerp(
               theme.colorScheme.primary,

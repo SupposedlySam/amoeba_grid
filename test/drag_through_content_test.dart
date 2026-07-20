@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fluid_draggable_grid/fluid_draggable_grid.dart';
+import 'package:liquid_grid/liquid_grid.dart';
 
 void main() {
   testWidgets('card drags when grabbed through hit-opaque content',
       (tester) async {
-    const config = FluidGridConfig(
+    const config = LiquidGridConfig(
         columns: 8, rows: 8, gap: 10, minCellExtent: 80, maxCellExtent: 80);
-    final controller = FluidGridController(config: config);
+    final controller = LiquidGridController(config: config);
 
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
-        body: FluidGridView(
+        body: LiquidGridView(
           controller: controller,
           cards: [
-            FluidGridCard(
+            LiquidGridCard(
               id: 'a',
               initialShape: CardShape.rect(0, 0, 2, 2),
               child: InkWell(

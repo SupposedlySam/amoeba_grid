@@ -1,12 +1,12 @@
 import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fluid_draggable_grid/fluid_draggable_grid.dart';
-import 'package:fluid_draggable_grid/src/engine/handles.dart';
-import 'package:fluid_draggable_grid/src/engine/outline.dart';
+import 'package:liquid_grid/liquid_grid.dart';
+import 'package:liquid_grid/src/engine/handles.dart';
+import 'package:liquid_grid/src/engine/outline.dart';
 
 void main() {
-  const config = FluidGridConfig(
+  const config = LiquidGridConfig(
       columns: 8, rows: 8, gap: 12, insideCornerRadius: 8,
       outsideCornerRadius: 20);
   final metrics = GridMetrics.resolve(config, const Size(1200, 900));

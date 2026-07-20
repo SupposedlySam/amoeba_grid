@@ -2,10 +2,10 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
 import '../engine/content_geometry.dart';
-import 'fluid_card_scope.dart';
+import 'liquid_card_scope.dart';
 
 /// Cross-axis placement of each child within its band span.
-enum FluidFlowAlignment { start, center, end, stretch }
+enum LiquidFlowAlignment { start, center, end, stretch }
 
 /// Flows children along one axis through the card's shape: at every step the
 /// child is constrained to the free span at the current position, so content
@@ -15,40 +15,40 @@ enum FluidFlowAlignment { start, center, end, stretch }
 ///
 /// Outside a fluid card this behaves like a plain top-to-bottom (or
 /// left-to-right) list.
-class FluidFlow extends MultiChildRenderObjectWidget {
-  const FluidFlow({
+class LiquidFlow extends MultiChildRenderObjectWidget {
+  const LiquidFlow({
     super.key,
     this.axis = Axis.vertical,
     this.spacing = 0,
-    this.alignment = FluidFlowAlignment.stretch,
+    this.alignment = LiquidFlowAlignment.stretch,
     super.children,
   });
 
   final Axis axis;
   final double spacing;
-  final FluidFlowAlignment alignment;
+  final LiquidFlowAlignment alignment;
 
   @override
-  RenderFluidFlow createRenderObject(BuildContext context) => RenderFluidFlow(
-        geometry: FluidCardScope.maybeOf(context),
+  RenderLiquidFlow createRenderObject(BuildContext context) => RenderLiquidFlow(
+        geometry: LiquidCardScope.maybeOf(context),
         axis: axis,
         spacing: spacing,
         alignment: alignment,
       );
 
   @override
-  void updateRenderObject(BuildContext context, RenderFluidFlow renderObject) {
+  void updateRenderObject(BuildContext context, RenderLiquidFlow renderObject) {
     renderObject
-      ..geometry = FluidCardScope.maybeOf(context)
+      ..geometry = LiquidCardScope.maybeOf(context)
       ..axis = axis
       ..spacing = spacing
       ..alignment = alignment;
   }
 }
 
-/// Vertical [FluidFlow].
-class FluidColumn extends FluidFlow {
-  const FluidColumn({
+/// Vertical [LiquidFlow].
+class LiquidColumn extends LiquidFlow {
+  const LiquidColumn({
     super.key,
     super.spacing,
     super.alignment,
@@ -56,9 +56,9 @@ class FluidColumn extends FluidFlow {
   }) : super(axis: Axis.vertical);
 }
 
-/// Horizontal [FluidFlow].
-class FluidRow extends FluidFlow {
-  const FluidRow({
+/// Horizontal [LiquidFlow].
+class LiquidRow extends LiquidFlow {
+  const LiquidRow({
     super.key,
     super.spacing,
     super.alignment,
@@ -66,21 +66,21 @@ class FluidRow extends FluidFlow {
   }) : super(axis: Axis.horizontal);
 }
 
-class FluidFlowParentData extends ContainerBoxParentData<RenderBox> {}
+class LiquidFlowParentData extends ContainerBoxParentData<RenderBox> {}
 
-class RenderFluidFlow extends RenderBox
+class RenderLiquidFlow extends RenderBox
     with
-        ContainerRenderObjectMixin<RenderBox, FluidFlowParentData>,
-        RenderBoxContainerDefaultsMixin<RenderBox, FluidFlowParentData> {
-  RenderFluidFlow({
+        ContainerRenderObjectMixin<RenderBox, LiquidFlowParentData>,
+        RenderBoxContainerDefaultsMixin<RenderBox, LiquidFlowParentData> {
+  RenderLiquidFlow({
     required this._geometry,
     required this._axis,
     required this._spacing,
     required this._alignment,
   });
 
-  FluidCardGeometry? _geometry;
-  set geometry(FluidCardGeometry? value) {
+  LiquidCardGeometry? _geometry;
+  set geometry(LiquidCardGeometry? value) {
     if (value == _geometry) return;
     _geometry = value;
     markNeedsLayout();
@@ -100,8 +100,8 @@ class RenderFluidFlow extends RenderBox
     markNeedsLayout();
   }
 
-  FluidFlowAlignment _alignment;
-  set alignment(FluidFlowAlignment value) {
+  LiquidFlowAlignment _alignment;
+  set alignment(LiquidFlowAlignment value) {
     if (value == _alignment) return;
     _alignment = value;
     markNeedsLayout();
@@ -109,8 +109,8 @@ class RenderFluidFlow extends RenderBox
 
   @override
   void setupParentData(RenderBox child) {
-    if (child.parentData is! FluidFlowParentData) {
-      child.parentData = FluidFlowParentData();
+    if (child.parentData is! LiquidFlowParentData) {
+      child.parentData = LiquidFlowParentData();
     }
   }
 
@@ -123,7 +123,7 @@ class RenderFluidFlow extends RenderBox
     var cursor = bands.isEmpty ? 0.0 : bands.first.start;
     var child = firstChild;
     while (child != null) {
-      final parentData = child.parentData! as FluidFlowParentData;
+      final parentData = child.parentData! as LiquidFlowParentData;
       final band = _bandAt(bands, cursor);
       if (band == null) {
         // Out of shape: stack remaining children below/right; the card clip
@@ -160,9 +160,9 @@ class RenderFluidFlow extends RenderBox
       final free = (vertical ? span.width : span.height) -
           (vertical ? child.size.width : child.size.height);
       final alignShift = switch (_alignment) {
-        FluidFlowAlignment.start || FluidFlowAlignment.stretch => 0.0,
-        FluidFlowAlignment.center => free / 2,
-        FluidFlowAlignment.end => free,
+        LiquidFlowAlignment.start || LiquidFlowAlignment.stretch => 0.0,
+        LiquidFlowAlignment.center => free / 2,
+        LiquidFlowAlignment.end => free,
       };
       parentData.offset = vertical
           ? Offset(span.left + alignShift, cursor)
@@ -174,19 +174,19 @@ class RenderFluidFlow extends RenderBox
 
   BoxConstraints _spanConstraints(Rect span, bool vertical) {
     final cross = vertical ? span.width : span.height;
-    final min = _alignment == FluidFlowAlignment.stretch ? cross : 0.0;
+    final min = _alignment == LiquidFlowAlignment.stretch ? cross : 0.0;
     return vertical
         ? BoxConstraints(minWidth: min, maxWidth: cross)
         : BoxConstraints(minHeight: min, maxHeight: cross);
   }
 
-  List<FluidBand> _bands() {
+  List<LiquidBand> _bands() {
     final geometry = _geometry;
     if (geometry == null) {
       final vertical = _axis == Axis.vertical;
       final extent = vertical ? size.height : size.width;
       return [
-        FluidBand(
+        LiquidBand(
             start: 0, end: extent, spans: [Offset.zero & size]),
       ];
     }
@@ -195,14 +195,14 @@ class RenderFluidFlow extends RenderBox
         : geometry.columnBands;
   }
 
-  FluidBand? _bandAt(List<FluidBand> bands, double position) {
+  LiquidBand? _bandAt(List<LiquidBand> bands, double position) {
     for (final band in bands) {
       if (position < band.end) return band;
     }
     return null;
   }
 
-  Rect _widestSpan(FluidBand band, bool vertical) {
+  Rect _widestSpan(LiquidBand band, bool vertical) {
     var best = band.spans.first;
     for (final span in band.spans) {
       final size = vertical ? span.width : span.height;
@@ -214,7 +214,7 @@ class RenderFluidFlow extends RenderBox
 
   /// Intersection of [span] with the matching span of every band the range
   /// [from, to) crosses. Returns null when the child stays inside one band.
-  Rect? _intersectAcross(List<FluidBand> bands, double from, double to,
+  Rect? _intersectAcross(List<LiquidBand> bands, double from, double to,
       Rect span, bool vertical) {
     var result = span;
     var crossed = false;

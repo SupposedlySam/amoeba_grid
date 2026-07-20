@@ -1,4 +1,4 @@
-import 'package:fluid_draggable_grid/fluid_draggable_grid.dart';
+import 'package:liquid_grid/liquid_grid.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -9,8 +9,8 @@ import 'prefs_storage.dart';
 
 void main() {
   if (kDebugMode) {
-    FluidGridDiagnostics.enabled = true;
-    FluidGridDiagnostics.attachDebugPrintLogger();
+    LiquidGridDiagnostics.enabled = true;
+    LiquidGridDiagnostics.attachDebugPrintLogger();
   }
   runApp(const DemoApp());
 }
@@ -30,7 +30,7 @@ class DemoApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Fluid Draggable Grid',
+      title: 'Liquid Draggable Grid',
       debugShowCheckedModeBanner: false,
       scrollBehavior: const _DesktopScrollBehavior(),
       theme: ThemeData(
@@ -56,7 +56,7 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  FluidGridConfig _config = const FluidGridConfig(
+  LiquidGridConfig _config = const LiquidGridConfig(
     columns: 8,
     rows: 12,
     minCellExtent: 68,
@@ -66,16 +66,16 @@ class _DashboardPageState extends State<DashboardPage> {
     outsideCornerRadius: 24,
   );
 
-  late FluidGridController _controller = _makeController();
+  late LiquidGridController _controller = _makeController();
   bool _showConsole = kDebugMode;
   bool _showConfig = false;
 
-  FluidGridController _makeController() => FluidGridController(
+  LiquidGridController _makeController() => LiquidGridController(
         config: _config,
         storage: SharedPrefsGridStorage(),
       );
 
-  void _updateConfig(FluidGridConfig config) {
+  void _updateConfig(LiquidGridConfig config) {
     setState(() {
       _config = config;
       _controller.dispose();
@@ -83,54 +83,54 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
-  /// Rect-style cards sit inside a [FluidContentArea] (they stay
+  /// Rect-style cards sit inside a [LiquidContentArea] (they stay
   /// rectangular but dodge notches); the tasks, notes, and regions cards
   /// use the flow widgets directly and genuinely reshape with the card.
-  List<FluidGridCard> _cards(BuildContext context) => [
-        FluidGridCard(
+  List<LiquidGridCard> _cards(BuildContext context) => [
+        LiquidGridCard(
           id: 'revenue',
           initialShape: CardShape.rect(0, 0, 3, 2),
-          child: const FluidContentArea(child: RevenueCard()),
+          child: const LiquidContentArea(child: RevenueCard()),
         ),
-        FluidGridCard(
+        LiquidGridCard(
           id: 'activity',
           initialShape: CardShape.rect(3, 0, 3, 2),
-          child: const FluidContentArea(child: ActivityCard()),
+          child: const LiquidContentArea(child: ActivityCard()),
         ),
-        FluidGridCard(
+        LiquidGridCard(
           id: 'weather',
           initialShape: CardShape.rect(6, 0, 2, 2),
-          child: const FluidContentArea(child: WeatherCard()),
+          child: const LiquidContentArea(child: WeatherCard()),
         ),
-        FluidGridCard(
+        LiquidGridCard(
           id: 'tasks',
           initialShape: CardShape.rect(0, 2, 2, 3),
           child: const TasksCard(),
         ),
-        FluidGridCard(
+        LiquidGridCard(
           id: 'nowPlaying',
           initialShape: CardShape.rect(2, 2, 3, 2),
-          child: const FluidContentArea(child: NowPlayingCard()),
+          child: const LiquidContentArea(child: NowPlayingCard()),
         ),
-        FluidGridCard(
+        LiquidGridCard(
           id: 'storage',
           initialShape: CardShape.rect(5, 2, 3, 2),
-          child: const FluidContentArea(child: StorageCard()),
+          child: const LiquidContentArea(child: StorageCard()),
         ),
-        FluidGridCard(
+        LiquidGridCard(
           id: 'notes',
           initialShape: CardShape.rect(2, 4, 3, 3),
           child: const NotesCard(),
         ),
-        FluidGridCard(
+        LiquidGridCard(
           id: 'regions',
           initialShape: CardShape.rect(5, 4, 3, 3),
           child: const RegionsCard(),
         ),
-        FluidGridCard(
+        LiquidGridCard(
           id: 'team',
           initialShape: CardShape.rect(0, 5, 2, 1),
-          child: const FluidContentArea(child: TeamCard()),
+          child: const LiquidContentArea(child: TeamCard()),
         ),
       ];
 
@@ -145,7 +145,7 @@ class _DashboardPageState extends State<DashboardPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: const Text('Fluid Draggable Grid'),
+        title: const Text('Liquid Draggable Grid'),
         actions: [
           IconButton(
             tooltip: 'Reset layout to initial shapes',
@@ -172,7 +172,7 @@ class _DashboardPageState extends State<DashboardPage> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: FluidGridView(
+            child: LiquidGridView(
               key: ValueKey(_config),
               controller: _controller,
               cards: _cards(context),
@@ -210,8 +210,8 @@ class _ConfigPanel extends StatelessWidget {
     required this.onClose,
   });
 
-  final FluidGridConfig config;
-  final ValueChanged<FluidGridConfig> onChanged;
+  final LiquidGridConfig config;
+  final ValueChanged<LiquidGridConfig> onChanged;
   final VoidCallback onClose;
 
   @override
