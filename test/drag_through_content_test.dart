@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:liquid_grid/liquid_grid.dart';
+import 'package:amoeba_grid/amoeba_grid.dart';
 
 void main() {
   testWidgets('card drags when grabbed through hit-opaque content',
       (tester) async {
-    const config = LiquidGridConfig(
+    const config = AmoebaGridConfig(
         columns: 8, rows: 8, gap: 10, minCellExtent: 80, maxCellExtent: 80);
-    final controller = LiquidGridController(config: config);
+    final controller = AmoebaGridController(config: config);
 
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
-        body: LiquidGridView(
+        body: AmoebaGridView(
           controller: controller,
           cards: [
-            LiquidGridCard(
+            AmoebaGridCard(
               id: 'a',
               initialShape: CardShape.rect(0, 0, 2, 2),
               child: InkWell(

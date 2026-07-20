@@ -1,6 +1,6 @@
-# liquid_grid
+# amoeba_grid
 
-A liquid dashboard grid for Flutter. Cards live on a fixed field of
+An amoeba dashboard grid for Flutter. Cards live on a fixed field of
 square units, reshape **strip-by-strip into organic polyomino silhouettes**,
 push through each other **amoeba-style**, and remember the user's shaping per
 viewport breakpoint.
@@ -11,7 +11,7 @@ non-rectangular shapes).
 
 ## Highlights
 
-- **Liquid grid, fluid cells** — you configure minimum `columns x rows`; the
+- **Amoeba grid, fluid cells** — you configure minimum `columns x rows`; the
   square cell extent flexes between `minCellExtent` and `maxCellExtent` to
   fill the viewport, and when there's room for more whole units at max
   extent, the field grows extra columns/rows to match the window. When even
@@ -39,14 +39,14 @@ non-rectangular shapes).
   narrow window and a wide window can hold different layouts. Storage is a
   two-method interface; bring `shared_preferences`, a file, or a server.
 - **Deep instrumentation, debug-only** — every hover, snap, trim, relocation,
-  commit, and persistence event streams from `LiquidGridDiagnostics`, gated
+  commit, and persistence event streams from `AmoebaGridDiagnostics`, gated
   behind a flag that is inert in release builds.
 
 ## Usage
 
 ```dart
-final controller = LiquidGridController(
-  config: const LiquidGridConfig(
+final controller = AmoebaGridController(
+  config: const AmoebaGridConfig(
     columns: 8,
     rows: 12,
     minCellExtent: 68,
@@ -58,10 +58,10 @@ final controller = LiquidGridController(
   storage: MyPrefsStorage(), // optional; defaults to in-memory
 );
 
-LiquidGridView(
+AmoebaGridView(
   controller: controller,
   cards: [
-    LiquidGridCard(
+    AmoebaGridCard(
       id: 'revenue',
       initialShape: CardShape.rect(0, 0, 3, 2), // user shaping overrides this
       child: const RevenueCard(),
@@ -74,7 +74,7 @@ LiquidGridView(
 Persistence is two methods:
 
 ```dart
-class MyPrefsStorage implements LiquidGridStorage {
+class MyPrefsStorage implements AmoebaGridStorage {
   @override
   Future<String?> read(String key) async => ...;
   @override
@@ -86,40 +86,40 @@ Instrumentation:
 
 ```dart
 if (kDebugMode) {
-  LiquidGridDiagnostics.enabled = true;           // inert in release builds
-  LiquidGridDiagnostics.events.listen(onEvent);   // structured event stream
-  // or LiquidGridDiagnostics.attachDebugPrintLogger();
+  AmoebaGridDiagnostics.enabled = true;           // inert in release builds
+  AmoebaGridDiagnostics.events.listen(onEvent);   // structured event stream
+  // or AmoebaGridDiagnostics.attachDebugPrintLogger();
 }
 ```
 
 ## Shape-aware content
 
 Flutter's layout protocol is rectangular (`BoxConstraints`), so plain
-widgets can't flow around a notch — but liquid shapes are cell-quantized,
+widgets can't flow around a notch — but amoeba shapes are cell-quantized,
 which makes shape-aware layout tractable. Every card's child is wrapped in
-a `LiquidCardScope` publishing its `LiquidCardGeometry` (bands, largest
+a `AmoebaCardScope` publishing its `AmoebaCardGeometry` (bands, largest
 inscribed rectangle, maximal-rectangle regions), and a small family of
 content widgets builds on it:
 
 | Widget | What it does |
 | --- | --- |
-| `LiquidContentArea` | SafeArea for notches: lays its child in the largest rectangle fully inside the shape |
-| `LiquidRegions` | One builder call per rectangular sub-region of the shape (area-descending) |
-| `LiquidColumn` / `LiquidRow` / `LiquidFlow` | Flow children along an axis, constraining each to the free span at its position |
-| `LiquidText` | Text that wraps band-by-band around notches (a `shape-outside` equivalent) |
-| `LiquidPadding` | Padding that republishes correctly-deflated geometry to fluid widgets below |
+| `AmoebaContentArea` | SafeArea for notches: lays its child in the largest rectangle fully inside the shape |
+| `AmoebaRegions` | One builder call per rectangular sub-region of the shape (area-descending) |
+| `AmoebaColumn` / `AmoebaRow` / `AmoebaFlow` | Flow children along an axis, constraining each to the free span at its position |
+| `AmoebaText` | Text that wraps band-by-band around notches (a `shape-outside` equivalent) |
+| `AmoebaPadding` | Padding that republishes correctly-deflated geometry to fluid widgets below |
 
 All of them degrade gracefully to plain rectangular behavior outside a
-liquid card. Content is laid out against the settled target shape while the
+amoeba card. Content is laid out against the settled target shape while the
 morph clip animates, so reshaping never causes per-frame reflow jitter.
 
 ```dart
-LiquidGridCard(
+AmoebaGridCard(
   id: 'notes',
   initialShape: CardShape.rect(2, 4, 3, 3),
-  child: LiquidPadding(
+  child: AmoebaPadding(
     padding: const EdgeInsets.all(16),
-    child: LiquidText('Words flow around whatever you carve…'),
+    child: AmoebaText('Words flow around whatever you carve…'),
   ),
 );
 ```
@@ -148,6 +148,6 @@ cd example && flutter run -d macos
 
 ## Status
 
-Early release. The API surface (`LiquidGridConfig`, `LiquidGridController`,
-`LiquidGridCard`, `LiquidGridStorage`, `LiquidGridDiagnostics`) is small on
+Early release. The API surface (`AmoebaGridConfig`, `AmoebaGridController`,
+`AmoebaGridCard`, `AmoebaGridStorage`, `AmoebaGridDiagnostics`) is small on
 purpose; feedback welcome.

@@ -1,4 +1,4 @@
-import 'package:liquid_grid/liquid_grid.dart';
+import 'package:amoeba_grid/amoeba_grid.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -9,8 +9,8 @@ import 'prefs_storage.dart';
 
 void main() {
   if (kDebugMode) {
-    LiquidGridDiagnostics.enabled = true;
-    LiquidGridDiagnostics.attachDebugPrintLogger();
+    AmoebaGridDiagnostics.enabled = true;
+    AmoebaGridDiagnostics.attachDebugPrintLogger();
   }
   runApp(const DemoApp());
 }
@@ -30,7 +30,7 @@ class DemoApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Liquid Draggable Grid',
+      title: 'Amoeba Draggable Grid',
       debugShowCheckedModeBanner: false,
       scrollBehavior: const _DesktopScrollBehavior(),
       theme: ThemeData(
@@ -56,7 +56,7 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  LiquidGridConfig _config = const LiquidGridConfig(
+  AmoebaGridConfig _config = const AmoebaGridConfig(
     columns: 8,
     rows: 12,
     minCellExtent: 68,
@@ -66,16 +66,16 @@ class _DashboardPageState extends State<DashboardPage> {
     outsideCornerRadius: 24,
   );
 
-  late LiquidGridController _controller = _makeController();
+  late AmoebaGridController _controller = _makeController();
   bool _showConsole = kDebugMode;
   bool _showConfig = false;
 
-  LiquidGridController _makeController() => LiquidGridController(
+  AmoebaGridController _makeController() => AmoebaGridController(
         config: _config,
         storage: SharedPrefsGridStorage(),
       );
 
-  void _updateConfig(LiquidGridConfig config) {
+  void _updateConfig(AmoebaGridConfig config) {
     setState(() {
       _config = config;
       _controller.dispose();
@@ -83,54 +83,54 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
-  /// Rect-style cards sit inside a [LiquidContentArea] (they stay
+  /// Rect-style cards sit inside a [AmoebaContentArea] (they stay
   /// rectangular but dodge notches); the tasks, notes, and regions cards
   /// use the flow widgets directly and genuinely reshape with the card.
-  List<LiquidGridCard> _cards(BuildContext context) => [
-        LiquidGridCard(
+  List<AmoebaGridCard> _cards(BuildContext context) => [
+        AmoebaGridCard(
           id: 'revenue',
           initialShape: CardShape.rect(0, 0, 3, 2),
-          child: const LiquidContentArea(child: RevenueCard()),
+          child: const AmoebaContentArea(child: RevenueCard()),
         ),
-        LiquidGridCard(
+        AmoebaGridCard(
           id: 'activity',
           initialShape: CardShape.rect(3, 0, 3, 2),
-          child: const LiquidContentArea(child: ActivityCard()),
+          child: const AmoebaContentArea(child: ActivityCard()),
         ),
-        LiquidGridCard(
+        AmoebaGridCard(
           id: 'weather',
           initialShape: CardShape.rect(6, 0, 2, 2),
-          child: const LiquidContentArea(child: WeatherCard()),
+          child: const AmoebaContentArea(child: WeatherCard()),
         ),
-        LiquidGridCard(
+        AmoebaGridCard(
           id: 'tasks',
           initialShape: CardShape.rect(0, 2, 2, 3),
           child: const TasksCard(),
         ),
-        LiquidGridCard(
+        AmoebaGridCard(
           id: 'nowPlaying',
           initialShape: CardShape.rect(2, 2, 3, 2),
-          child: const LiquidContentArea(child: NowPlayingCard()),
+          child: const AmoebaContentArea(child: NowPlayingCard()),
         ),
-        LiquidGridCard(
+        AmoebaGridCard(
           id: 'storage',
           initialShape: CardShape.rect(5, 2, 3, 2),
-          child: const LiquidContentArea(child: StorageCard()),
+          child: const AmoebaContentArea(child: StorageCard()),
         ),
-        LiquidGridCard(
+        AmoebaGridCard(
           id: 'notes',
           initialShape: CardShape.rect(2, 4, 3, 3),
           child: const NotesCard(),
         ),
-        LiquidGridCard(
+        AmoebaGridCard(
           id: 'regions',
           initialShape: CardShape.rect(5, 4, 3, 3),
           child: const RegionsCard(),
         ),
-        LiquidGridCard(
+        AmoebaGridCard(
           id: 'team',
           initialShape: CardShape.rect(0, 5, 2, 1),
-          child: const LiquidContentArea(child: TeamCard()),
+          child: const AmoebaContentArea(child: TeamCard()),
         ),
       ];
 
@@ -145,7 +145,7 @@ class _DashboardPageState extends State<DashboardPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: const Text('Liquid Draggable Grid'),
+        title: const Text('Amoeba Draggable Grid'),
         actions: [
           IconButton(
             tooltip: 'Reset layout to initial shapes',
@@ -172,7 +172,7 @@ class _DashboardPageState extends State<DashboardPage> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: LiquidGridView(
+            child: AmoebaGridView(
               key: ValueKey(_config),
               controller: _controller,
               cards: _cards(context),
@@ -210,8 +210,8 @@ class _ConfigPanel extends StatelessWidget {
     required this.onClose,
   });
 
-  final LiquidGridConfig config;
-  final ValueChanged<LiquidGridConfig> onChanged;
+  final AmoebaGridConfig config;
+  final ValueChanged<AmoebaGridConfig> onChanged;
   final VoidCallback onClose;
 
   @override

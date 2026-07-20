@@ -2,7 +2,7 @@
 
 Initial release.
 
-- `LiquidGridView` — fixed columns x rows field of square units, pannable in
+- `AmoebaGridView` — fixed columns x rows field of square units, pannable in
   both axes (spreadsheet-style) with edge auto-scroll while dragging.
 - Polyomino card shaping: per-strip side handles, standard-rules corner
   handles, 50% snap previews, inside/outside corner radii.
@@ -10,5 +10,5 @@ Initial release.
   edge amoeba-style, revert when cleared, commit on drop, and relocate when
   they'd drop below 1x1.
 - Mobile-first persisted layout overrides per viewport-width breakpoint via
-  a pluggable `LiquidGridStorage`.
-- Debug-only instrumentation stream (`LiquidGridDiagnostics`).
+  a pluggable `AmoebaGridStorage`.
+- Debug-only instrumentation stream (`AmoebaGridDiagnostics`).

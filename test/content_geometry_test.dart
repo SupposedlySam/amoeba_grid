@@ -1,18 +1,18 @@
 import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:liquid_grid/liquid_grid.dart';
+import 'package:amoeba_grid/amoeba_grid.dart';
 
 void main() {
-  const config = LiquidGridConfig(
+  const config = AmoebaGridConfig(
       columns: 8, rows: 8, gap: 10, minCellExtent: 80, maxCellExtent: 80);
   final metrics = GridMetrics.resolve(config, const Size(400, 400));
   final pitch = metrics.pitch; // 90
 
-  group('LiquidCardGeometry', () {
+  group('AmoebaCardGeometry', () {
     test('rectangle: one band, one region, largestRect covers everything',
         () {
       final geometry =
-          LiquidCardGeometry.compute(CardShape.rect(1, 1, 3, 2), metrics);
+          AmoebaCardGeometry.compute(CardShape.rect(1, 1, 3, 2), metrics);
       expect(geometry.rowBands.length, 1);
       expect(geometry.rowBands.single.spans.length, 1);
       expect(geometry.regions.length, 1);
@@ -26,7 +26,7 @@ void main() {
       // Vertical arm 1 wide x 2 tall + foot extending right on the bottom.
       final shape = CardShape(
           const [CellIndex(0, 0), CellIndex(0, 1), CellIndex(1, 1)]);
-      final geometry = LiquidCardGeometry.compute(shape, metrics);
+      final geometry = AmoebaCardGeometry.compute(shape, metrics);
 
       expect(geometry.rowBands.length, 2);
       expect(geometry.rowBands[0].spans.single.width, closeTo(80, 0.001));
@@ -41,7 +41,7 @@ void main() {
 
     test('adjacent identical rows merge into one band across the gap', () {
       final geometry =
-          LiquidCardGeometry.compute(CardShape.rect(0, 0, 2, 3), metrics);
+          AmoebaCardGeometry.compute(CardShape.rect(0, 0, 2, 3), metrics);
       expect(geometry.rowBands.length, 1);
       expect(geometry.rowBands.single.extent,
           closeTo(3 * 80 + 2 * 10, 0.001));
@@ -53,7 +53,7 @@ void main() {
         CellIndex(0, 0), CellIndex(2, 0),
         CellIndex(0, 1), CellIndex(1, 1), CellIndex(2, 1),
       ]);
-      final geometry = LiquidCardGeometry.compute(shape, metrics);
+      final geometry = AmoebaCardGeometry.compute(shape, metrics);
       expect(geometry.rowBands.first.spans.length, 2);
       expect(geometry.rowBands.last.spans.length, 1);
       // Largest rect is the full bottom row.
@@ -63,7 +63,7 @@ void main() {
 
     test('deflate trims spans and re-anchors coordinates', () {
       final geometry =
-          LiquidCardGeometry.compute(CardShape.rect(0, 0, 2, 2), metrics)
+          AmoebaCardGeometry.compute(CardShape.rect(0, 0, 2, 2), metrics)
               .deflate(const EdgeInsets.all(15));
       expect(geometry.size.width, closeTo(2 * 80 + 10 - 30, 0.001));
       expect(geometry.rowBands.single.spans.single.left, 0);
@@ -74,7 +74,7 @@ void main() {
     test('cropTo produces rectangular sub-geometry', () {
       final shape = CardShape(
           const [CellIndex(0, 0), CellIndex(0, 1), CellIndex(1, 1)]);
-      final geometry = LiquidCardGeometry.compute(shape, metrics);
+      final geometry = AmoebaCardGeometry.compute(shape, metrics);
       final cropped = geometry.cropTo(geometry.largestRect);
       expect(cropped.regions.length, 1);
       expect(cropped.size, geometry.largestRect.size);
@@ -87,7 +87,7 @@ void main() {
     test('column bands transpose the same structure', () {
       final shape = CardShape(
           const [CellIndex(0, 0), CellIndex(0, 1), CellIndex(1, 1)]);
-      final geometry = LiquidCardGeometry.compute(shape, metrics);
+      final geometry = AmoebaCardGeometry.compute(shape, metrics);
       expect(geometry.columnBands.length, 2);
       // First column spans both rows; second only the bottom row.
       expect(geometry.columnBands[0].spans.single.height,
@@ -107,7 +107,7 @@ void main() {
       // bounding box, but they must still receive padding.
       final shape = CardShape(
           const [CellIndex(0, 0), CellIndex(0, 1), CellIndex(1, 1)]);
-      final geometry = LiquidCardGeometry.compute(shape, metrics)
+      final geometry = AmoebaCardGeometry.compute(shape, metrics)
           .deflate(const EdgeInsets.all(10));
 
       final arm = geometry.regions
@@ -124,7 +124,7 @@ void main() {
 
     test('cropTo stays pure windowing (no outline insets)', () {
       final geometry =
-          LiquidCardGeometry.compute(CardShape.rect(0, 0, 2, 2), metrics);
+          AmoebaCardGeometry.compute(CardShape.rect(0, 0, 2, 2), metrics);
       final cropped =
           geometry.cropTo(const Rect.fromLTRB(20, 20, 120, 120));
       expect(cropped.size, const Size(100, 100));

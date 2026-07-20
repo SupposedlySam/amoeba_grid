@@ -1,12 +1,12 @@
 import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:liquid_grid/liquid_grid.dart';
-import 'package:liquid_grid/src/engine/handles.dart';
-import 'package:liquid_grid/src/engine/outline.dart';
+import 'package:amoeba_grid/amoeba_grid.dart';
+import 'package:amoeba_grid/src/engine/handles.dart';
+import 'package:amoeba_grid/src/engine/outline.dart';
 
 void main() {
-  const config = LiquidGridConfig(
+  const config = AmoebaGridConfig(
       columns: 8, rows: 8, gap: 12, insideCornerRadius: 8,
       outsideCornerRadius: 20);
   final metrics = GridMetrics.resolve(config, const Size(1200, 900));

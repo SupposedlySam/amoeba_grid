@@ -1,9 +1,9 @@
-import 'package:liquid_grid/liquid_grid.dart';
+import 'package:amoeba_grid/amoeba_grid.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Persists grid layouts with shared_preferences so shaping survives app
 /// restarts. The package stays plugin-free; apps plug in storage like this.
-class SharedPrefsGridStorage implements LiquidGridStorage {
+class SharedPrefsGridStorage implements AmoebaGridStorage {
   @override
   Future<String?> read(String key) async {
     final prefs = await SharedPreferences.getInstance();

@@ -1,5 +1,5 @@
-name: liquid_grid_example
-description: "Bento-style dashboard demo for liquid_grid."
+name: amoeba_grid_example
+description: "Bento-style dashboard demo for amoeba_grid."
 publish_to: 'none'
 version: 0.1.0+1
 
@@ -9,7 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  liquid_grid:
+  amoeba_grid:
     path: ../
   shared_preferences: ^2.5.5
 

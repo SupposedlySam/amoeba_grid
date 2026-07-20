@@ -6,13 +6,13 @@ import '../foundation/cell.dart';
 import '../engine/content_geometry.dart';
 import '../engine/outline.dart';
 import '../engine/outline_cache.dart';
-import 'liquid_card_scope.dart';
+import 'amoeba_card_scope.dart';
 
 /// Visual styling for the grid chrome. Card *content* styles itself; this
 /// covers the painted card surfaces, handles, previews, and backdrop.
 @immutable
-class LiquidGridStyle {
-  const LiquidGridStyle({
+class AmoebaGridStyle {
+  const AmoebaGridStyle({
     required this.cardColor,
     required this.cardBorderColor,
     required this.accentColor,
@@ -22,9 +22,9 @@ class LiquidGridStyle {
   });
 
   /// Dark-first defaults tuned for a bento-style dashboard.
-  factory LiquidGridStyle.fromTheme(ThemeData theme) {
+  factory AmoebaGridStyle.fromTheme(ThemeData theme) {
     final scheme = theme.colorScheme;
-    return LiquidGridStyle(
+    return AmoebaGridStyle(
       cardColor: scheme.surfaceContainerHigh,
       cardBorderColor: scheme.outlineVariant.withValues(alpha: 0.35),
       accentColor: scheme.primary,
@@ -47,7 +47,7 @@ class GridBackdropPainter extends CustomPainter {
   GridBackdropPainter(this.metrics, this.style);
 
   final GridMetrics metrics;
-  final LiquidGridStyle style;
+  final AmoebaGridStyle style;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -75,7 +75,7 @@ class CardChromePainter extends CustomPainter {
   });
 
   final Path path;
-  final LiquidGridStyle style;
+  final AmoebaGridStyle style;
   final Color color;
 
   /// 0..1: how "picked up" the card is.
@@ -117,7 +117,7 @@ class PreviewPainter extends CustomPainter {
   PreviewPainter({required this.path, required this.style});
 
   final Path path;
-  final LiquidGridStyle style;
+  final AmoebaGridStyle style;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -153,7 +153,7 @@ class HandlesPainter extends CustomPainter {
   final List<GridHandle> handles;
   final GridHandle? hovered;
   final double reveal;
-  final LiquidGridStyle style;
+  final AmoebaGridStyle style;
   final GridMetrics metrics;
 
   @override
@@ -208,8 +208,8 @@ class HandlesPainter extends CustomPainter {
 
 /// One card: morphs organically between cell-quantized shapes and hosts the
 /// developer-provided content, clipped to the live outline.
-class LiquidCardSurface extends StatefulWidget {
-  const LiquidCardSurface({
+class AmoebaCardSurface extends StatefulWidget {
+  const AmoebaCardSurface({
     super.key,
     required this.shape,
     required this.metrics,
@@ -223,7 +223,7 @@ class LiquidCardSurface extends StatefulWidget {
 
   final CardShape shape;
   final GridMetrics metrics;
-  final LiquidGridStyle style;
+  final AmoebaGridStyle style;
   final Color color;
 
   /// Free-floating pixel offset while this card is being moved.
@@ -236,10 +236,10 @@ class LiquidCardSurface extends StatefulWidget {
   final Duration morphDuration;
 
   @override
-  State<LiquidCardSurface> createState() => _LiquidCardSurfaceState();
+  State<AmoebaCardSurface> createState() => _AmoebaCardSurfaceState();
 }
 
-class _LiquidCardSurfaceState extends State<LiquidCardSurface>
+class _AmoebaCardSurfaceState extends State<AmoebaCardSurface>
     with SingleTickerProviderStateMixin {
   late final AnimationController _morph = AnimationController(
     vsync: this,
@@ -252,8 +252,8 @@ class _LiquidCardSurfaceState extends State<LiquidCardSurface>
   Path? _fromPath;
   late Rect _fromBounds = _bounds(_target);
   late Rect _toBounds = _fromBounds;
-  late LiquidCardGeometry _geometry =
-      LiquidCardGeometry.compute(_target, widget.metrics);
+  late AmoebaCardGeometry _geometry =
+      AmoebaCardGeometry.compute(_target, widget.metrics);
 
   Path _outline(CardShape shape) =>
       OutlineCache.instance.outlineFor(shape, widget.metrics).paths;
@@ -277,7 +277,7 @@ class _LiquidCardSurfaceState extends State<LiquidCardSurface>
           .shift(widget.visualOffset);
 
   @override
-  void didUpdateWidget(LiquidCardSurface oldWidget) {
+  void didUpdateWidget(AmoebaCardSurface oldWidget) {
     super.didUpdateWidget(oldWidget);
     final metricsChanged = oldWidget.metrics != widget.metrics;
     if (widget.shape != _target || metricsChanged) {
@@ -289,7 +289,7 @@ class _LiquidCardSurfaceState extends State<LiquidCardSurface>
       _target = widget.shape;
       _toPath = _outline(_target);
       _toBounds = _bounds(_target);
-      _geometry = LiquidCardGeometry.compute(_target, widget.metrics);
+      _geometry = AmoebaCardGeometry.compute(_target, widget.metrics);
       if (metricsChanged && oldWidget.metrics.viewportSize !=
           widget.metrics.viewportSize) {
         // Resizes retarget instantly; morphing across metric spaces looks
@@ -335,7 +335,7 @@ class _LiquidCardSurfaceState extends State<LiquidCardSurface>
               rect: contentRect,
               child: ClipPath(
                 clipper: _ShiftedPathClipper(path, contentRect.topLeft),
-                child: LiquidCardScope(
+                child: AmoebaCardScope(
                   geometry: _geometry,
                   child: widget.child,
                 ),

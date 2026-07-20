@@ -2,10 +2,10 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
 import '../engine/content_geometry.dart';
-import 'liquid_card_scope.dart';
+import 'amoeba_card_scope.dart';
 
 /// Cross-axis placement of each child within its band span.
-enum LiquidFlowAlignment { start, center, end, stretch }
+enum AmoebaFlowAlignment { start, center, end, stretch }
 
 /// Flows children along one axis through the card's shape: at every step the
 /// child is constrained to the free span at the current position, so content
@@ -15,40 +15,40 @@ enum LiquidFlowAlignment { start, center, end, stretch }
 ///
 /// Outside a fluid card this behaves like a plain top-to-bottom (or
 /// left-to-right) list.
-class LiquidFlow extends MultiChildRenderObjectWidget {
-  const LiquidFlow({
+class AmoebaFlow extends MultiChildRenderObjectWidget {
+  const AmoebaFlow({
     super.key,
     this.axis = Axis.vertical,
     this.spacing = 0,
-    this.alignment = LiquidFlowAlignment.stretch,
+    this.alignment = AmoebaFlowAlignment.stretch,
     super.children,
   });
 
   final Axis axis;
   final double spacing;
-  final LiquidFlowAlignment alignment;
+  final AmoebaFlowAlignment alignment;
 
   @override
-  RenderLiquidFlow createRenderObject(BuildContext context) => RenderLiquidFlow(
-        geometry: LiquidCardScope.maybeOf(context),
+  RenderAmoebaFlow createRenderObject(BuildContext context) => RenderAmoebaFlow(
+        geometry: AmoebaCardScope.maybeOf(context),
         axis: axis,
         spacing: spacing,
         alignment: alignment,
       );
 
   @override
-  void updateRenderObject(BuildContext context, RenderLiquidFlow renderObject) {
+  void updateRenderObject(BuildContext context, RenderAmoebaFlow renderObject) {
     renderObject
-      ..geometry = LiquidCardScope.maybeOf(context)
+      ..geometry = AmoebaCardScope.maybeOf(context)
       ..axis = axis
       ..spacing = spacing
       ..alignment = alignment;
   }
 }
 
-/// Vertical [LiquidFlow].
-class LiquidColumn extends LiquidFlow {
-  const LiquidColumn({
+/// Vertical [AmoebaFlow].
+class AmoebaColumn extends AmoebaFlow {
+  const AmoebaColumn({
     super.key,
     super.spacing,
     super.alignment,
@@ -56,9 +56,9 @@ class LiquidColumn extends LiquidFlow {
   }) : super(axis: Axis.vertical);
 }
 
-/// Horizontal [LiquidFlow].
-class LiquidRow extends LiquidFlow {
-  const LiquidRow({
+/// Horizontal [AmoebaFlow].
+class AmoebaRow extends AmoebaFlow {
+  const AmoebaRow({
     super.key,
     super.spacing,
     super.alignment,
@@ -66,21 +66,21 @@ class LiquidRow extends LiquidFlow {
   }) : super(axis: Axis.horizontal);
 }
 
-class LiquidFlowParentData extends ContainerBoxParentData<RenderBox> {}
+class AmoebaFlowParentData extends ContainerBoxParentData<RenderBox> {}
 
-class RenderLiquidFlow extends RenderBox
+class RenderAmoebaFlow extends RenderBox
     with
-        ContainerRenderObjectMixin<RenderBox, LiquidFlowParentData>,
-        RenderBoxContainerDefaultsMixin<RenderBox, LiquidFlowParentData> {
-  RenderLiquidFlow({
+        ContainerRenderObjectMixin<RenderBox, AmoebaFlowParentData>,
+        RenderBoxContainerDefaultsMixin<RenderBox, AmoebaFlowParentData> {
+  RenderAmoebaFlow({
     required this._geometry,
     required this._axis,
     required this._spacing,
     required this._alignment,
   });
 
-  LiquidCardGeometry? _geometry;
-  set geometry(LiquidCardGeometry? value) {
+  AmoebaCardGeometry? _geometry;
+  set geometry(AmoebaCardGeometry? value) {
     if (value == _geometry) return;
     _geometry = value;
     markNeedsLayout();
@@ -100,8 +100,8 @@ class RenderLiquidFlow extends RenderBox
     markNeedsLayout();
   }
 
-  LiquidFlowAlignment _alignment;
-  set alignment(LiquidFlowAlignment value) {
+  AmoebaFlowAlignment _alignment;
+  set alignment(AmoebaFlowAlignment value) {
     if (value == _alignment) return;
     _alignment = value;
     markNeedsLayout();
@@ -109,8 +109,8 @@ class RenderLiquidFlow extends RenderBox
 
   @override
   void setupParentData(RenderBox child) {
-    if (child.parentData is! LiquidFlowParentData) {
-      child.parentData = LiquidFlowParentData();
+    if (child.parentData is! AmoebaFlowParentData) {
+      child.parentData = AmoebaFlowParentData();
     }
   }
 
@@ -123,7 +123,7 @@ class RenderLiquidFlow extends RenderBox
     var cursor = bands.isEmpty ? 0.0 : bands.first.start;
     var child = firstChild;
     while (child != null) {
-      final parentData = child.parentData! as LiquidFlowParentData;
+      final parentData = child.parentData! as AmoebaFlowParentData;
       final band = _bandAt(bands, cursor);
       if (band == null) {
         // Out of shape: stack remaining children below/right; the card clip
@@ -160,9 +160,9 @@ class RenderLiquidFlow extends RenderBox
       final free = (vertical ? span.width : span.height) -
           (vertical ? child.size.width : child.size.height);
       final alignShift = switch (_alignment) {
-        LiquidFlowAlignment.start || LiquidFlowAlignment.stretch => 0.0,
-        LiquidFlowAlignment.center => free / 2,
-        LiquidFlowAlignment.end => free,
+        AmoebaFlowAlignment.start || AmoebaFlowAlignment.stretch => 0.0,
+        AmoebaFlowAlignment.center => free / 2,
+        AmoebaFlowAlignment.end => free,
       };
       parentData.offset = vertical
           ? Offset(span.left + alignShift, cursor)
@@ -174,19 +174,19 @@ class RenderLiquidFlow extends RenderBox
 
   BoxConstraints _spanConstraints(Rect span, bool vertical) {
     final cross = vertical ? span.width : span.height;
-    final min = _alignment == LiquidFlowAlignment.stretch ? cross : 0.0;
+    final min = _alignment == AmoebaFlowAlignment.stretch ? cross : 0.0;
     return vertical
         ? BoxConstraints(minWidth: min, maxWidth: cross)
         : BoxConstraints(minHeight: min, maxHeight: cross);
   }
 
-  List<LiquidBand> _bands() {
+  List<AmoebaBand> _bands() {
     final geometry = _geometry;
     if (geometry == null) {
       final vertical = _axis == Axis.vertical;
       final extent = vertical ? size.height : size.width;
       return [
-        LiquidBand(
+        AmoebaBand(
             start: 0, end: extent, spans: [Offset.zero & size]),
       ];
     }
@@ -195,14 +195,14 @@ class RenderLiquidFlow extends RenderBox
         : geometry.columnBands;
   }
 
-  LiquidBand? _bandAt(List<LiquidBand> bands, double position) {
+  AmoebaBand? _bandAt(List<AmoebaBand> bands, double position) {
     for (final band in bands) {
       if (position < band.end) return band;
     }
     return null;
   }
 
-  Rect _widestSpan(LiquidBand band, bool vertical) {
+  Rect _widestSpan(AmoebaBand band, bool vertical) {
     var best = band.spans.first;
     for (final span in band.spans) {
       final size = vertical ? span.width : span.height;
@@ -214,7 +214,7 @@ class RenderLiquidFlow extends RenderBox
 
   /// Intersection of [span] with the matching span of every band the range
   /// [from, to) crosses. Returns null when the child stays inside one band.
-  Rect? _intersectAcross(List<LiquidBand> bands, double from, double to,
+  Rect? _intersectAcross(List<AmoebaBand> bands, double from, double to,
       Rect span, bool vertical) {
     var result = span;
     var crossed = false;

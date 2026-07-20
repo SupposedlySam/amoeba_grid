@@ -1,11 +1,11 @@
 import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:liquid_grid/liquid_grid.dart';
-import 'package:liquid_grid/src/engine/drag_engine.dart';
+import 'package:amoeba_grid/amoeba_grid.dart';
+import 'package:amoeba_grid/src/engine/drag_engine.dart';
 
 void main() {
-  const config = LiquidGridConfig(columns: 8, rows: 8);
+  const config = AmoebaGridConfig(columns: 8, rows: 8);
   final metrics = GridMetrics.resolve(config, const Size(1200, 800));
 
   group('applyStripResize', () {
@@ -190,7 +190,7 @@ void main() {
     });
 
     test('grid grows beyond config counts to fill the viewport', () {
-      const small = LiquidGridConfig(
+      const small = AmoebaGridConfig(
           columns: 4,
           rows: 4,
           minCellExtent: 60,
@@ -209,7 +209,7 @@ void main() {
     });
 
     test('occupied cells extend the grid on small viewports', () {
-      const small = LiquidGridConfig(
+      const small = AmoebaGridConfig(
           columns: 4,
           rows: 4,
           minCellExtent: 60,

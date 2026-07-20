@@ -1,14 +1,14 @@
 import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:liquid_grid/liquid_grid.dart';
-import 'package:liquid_grid/src/engine/handles.dart';
+import 'package:amoeba_grid/amoeba_grid.dart';
+import 'package:amoeba_grid/src/engine/handles.dart';
 
 void main() {
-  const config = LiquidGridConfig(columns: 8, rows: 8);
+  const config = AmoebaGridConfig(columns: 8, rows: 8);
 
-  LiquidGridController makeController(LiquidGridStorage storage) {
-    final controller = LiquidGridController(config: config, storage: storage)
+  AmoebaGridController makeController(AmoebaGridStorage storage) {
+    final controller = AmoebaGridController(config: config, storage: storage)
       ..registerCards({
         'a': CardShape.rect(0, 0, 2, 2),
         'b': CardShape.rect(4, 0, 2, 2),
@@ -19,7 +19,7 @@ void main() {
   }
 
   test('move drag snaps, trims the submissive, commits, persists', () async {
-    final storage = LiquidGridMemoryStorage();
+    final storage = AmoebaGridMemoryStorage();
     final controller = makeController(storage);
     await controller.load();
     final metrics = controller.metrics!;
@@ -58,7 +58,7 @@ void main() {
   });
 
   test('cancel reverts everything', () async {
-    final controller = makeController(LiquidGridMemoryStorage());
+    final controller = makeController(AmoebaGridMemoryStorage());
     await controller.load();
     final pitch = controller.metrics!.pitch;
     controller.startMove('a', const Offset(100, 100));
@@ -69,8 +69,8 @@ void main() {
   });
 
   test('1x1 submissive relocates opposite the entry edge', () async {
-    final storage = LiquidGridMemoryStorage();
-    final controller = LiquidGridController(config: config, storage: storage)
+    final storage = AmoebaGridMemoryStorage();
+    final controller = AmoebaGridController(config: config, storage: storage)
       ..registerCards({
         'big': CardShape.rect(0, 0, 2, 1),
         'tiny': CardShape.rect(3, 0, 1, 1),
@@ -90,9 +90,9 @@ void main() {
   });
 
   test('re-contact from another side computes a fresh entry edge', () async {
-    final config8 = const LiquidGridConfig(columns: 8, rows: 8);
+    final config8 = const AmoebaGridConfig(columns: 8, rows: 8);
     final controller =
-        LiquidGridController(config: config8, storage: LiquidGridMemoryStorage())
+        AmoebaGridController(config: config8, storage: AmoebaGridMemoryStorage())
           ..registerCards({
             'a': CardShape.rect(6, 3, 1, 1),
             'b': CardShape.rect(3, 3, 2, 2),
@@ -121,7 +121,7 @@ void main() {
   });
 
   test('resize preview holds origin shape until release', () async {
-    final controller = makeController(LiquidGridMemoryStorage());
+    final controller = makeController(AmoebaGridMemoryStorage());
     await controller.load();
     final metrics = controller.metrics!;
     final pitch = metrics.pitch;

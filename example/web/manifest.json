@@ -1,6 +1,6 @@
 {
-    "name": "liquid_grid_example",
-    "short_name": "liquid_grid_example",
+    "name": "amoeba_grid_example",
+    "short_name": "amoeba_grid_example",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

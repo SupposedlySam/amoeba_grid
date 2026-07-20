@@ -67,20 +67,20 @@ class DragSession {
 /// it to observe layout state. Committed shapes resolve as:
 /// user override for the active width bucket (mobile-first fallback through
 /// smaller buckets) -> programmatic initial shape.
-class LiquidGridController extends ChangeNotifier {
-  LiquidGridController({
+class AmoebaGridController extends ChangeNotifier {
+  AmoebaGridController({
     required this.config,
-    LiquidGridStorage? storage,
+    AmoebaGridStorage? storage,
     String? storageKey,
-  }) : _store = LiquidGridLayoutStore(
-          storage ?? LiquidGridMemoryStorage(),
-          storageKey: storageKey ?? LiquidGridLayoutStore.defaultKey,
+  }) : _store = AmoebaGridLayoutStore(
+          storage ?? AmoebaGridMemoryStorage(),
+          storageKey: storageKey ?? AmoebaGridLayoutStore.defaultKey,
         );
 
-  final LiquidGridConfig config;
-  final LiquidGridLayoutStore _store;
+  final AmoebaGridConfig config;
+  final AmoebaGridLayoutStore _store;
 
-  LiquidGridLayoutData _layoutData = const LiquidGridLayoutData.empty();
+  AmoebaGridLayoutData _layoutData = const AmoebaGridLayoutData.empty();
   final Map<String, CardShape> _initialShapes = {};
   final Map<String, CardShape> _committed = {};
 
@@ -131,7 +131,7 @@ class LiquidGridController extends ChangeNotifier {
     final bucketChanged = previous == null ||
         config.bucketFor(previous.viewportSize.width) !=
             config.bucketFor(metrics.viewportSize.width);
-    LiquidGridDiagnostics.emit(LiquidGridEventKind.metricsResolved,
+    AmoebaGridDiagnostics.emit(AmoebaGridEventKind.metricsResolved,
         'metrics resolved', {
       'cellExtent': metrics.cellExtent,
       'viewport': '${metrics.viewportSize}',
@@ -182,7 +182,7 @@ class LiquidGridController extends ChangeNotifier {
       originShape: origin,
       startPointer: pointer,
     )..pointer = pointer;
-    LiquidGridDiagnostics.emit(LiquidGridEventKind.dragStart, 'move start',
+    AmoebaGridDiagnostics.emit(AmoebaGridEventKind.dragStart, 'move start',
         {'card': cardId, 'origin': '$origin'});
     notifyListeners();
   }
@@ -198,7 +198,7 @@ class LiquidGridController extends ChangeNotifier {
       startPointer: pointer,
       handle: handle,
     )..pointer = pointer;
-    LiquidGridDiagnostics.emit(LiquidGridEventKind.dragStart, 'resize start',
+    AmoebaGridDiagnostics.emit(AmoebaGridEventKind.dragStart, 'resize start',
         {'card': handle.cardId, 'handle': handle.debugLabel});
     notifyListeners();
   }
@@ -217,8 +217,8 @@ class LiquidGridController extends ChangeNotifier {
     session.lastPreview = previousPreview;
 
     if (session.preview != previousPreview) {
-      LiquidGridDiagnostics.emit(
-          LiquidGridEventKind.previewChanged, 'preview snapped', {
+      AmoebaGridDiagnostics.emit(
+          AmoebaGridEventKind.previewChanged, 'preview snapped', {
         'card': session.cardId,
         'cells': session.preview.cells.length,
       });
@@ -284,7 +284,7 @@ class LiquidGridController extends ChangeNotifier {
 
       final entryEdge = session.entryEdges.putIfAbsent(entry.key, () {
         final edge = _entryEdgeFor(committed, session, approach);
-        LiquidGridDiagnostics.emit(LiquidGridEventKind.submissiveTrimmed,
+        AmoebaGridDiagnostics.emit(AmoebaGridEventKind.submissiveTrimmed,
             'contact', {'card': entry.key, 'entryEdge': edge.name});
         return edge;
       });
@@ -294,7 +294,7 @@ class LiquidGridController extends ChangeNotifier {
         session.submissives[entry.key] = SubmissiveState(
             entryEdge: entryEdge, shape: trimmed, relocated: false);
         if (previous[entry.key]?.shape != trimmed) {
-          LiquidGridDiagnostics.emit(LiquidGridEventKind.submissiveTrimmed,
+          AmoebaGridDiagnostics.emit(AmoebaGridEventKind.submissiveTrimmed,
               'trimmed', {'card': entry.key, 'cells': trimmed.cells.length});
         }
         continue;
@@ -308,10 +308,10 @@ class LiquidGridController extends ChangeNotifier {
         relocatedCells.addAll(relocated.cells);
         session.submissives[entry.key] = SubmissiveState(
             entryEdge: entryEdge, shape: relocated, relocated: true);
-        LiquidGridDiagnostics.emit(LiquidGridEventKind.submissiveRelocated,
+        AmoebaGridDiagnostics.emit(AmoebaGridEventKind.submissiveRelocated,
             'relocated', {'card': entry.key, 'edge': entryEdge.opposite.name});
       } else {
-        LiquidGridDiagnostics.emit(LiquidGridEventKind.submissiveRelocated,
+        AmoebaGridDiagnostics.emit(AmoebaGridEventKind.submissiveRelocated,
             'no room to relocate; reverting', {'card': entry.key});
       }
     }
@@ -336,7 +336,7 @@ class LiquidGridController extends ChangeNotifier {
 
     for (final id in previous.keys) {
       if (!session.submissives.containsKey(id)) {
-        LiquidGridDiagnostics.emit(LiquidGridEventKind.submissiveReverted,
+        AmoebaGridDiagnostics.emit(AmoebaGridEventKind.submissiveReverted,
             'no longer overlapped; reverted', {'card': id});
       }
     }
@@ -395,7 +395,7 @@ class LiquidGridController extends ChangeNotifier {
     }
     _committed.addAll(changed);
 
-    LiquidGridDiagnostics.emit(LiquidGridEventKind.layoutCommitted,
+    AmoebaGridDiagnostics.emit(AmoebaGridEventKind.layoutCommitted,
         'drag committed', {
       'aggressor': session.cardId,
       'submissives': session.submissives.keys.toList(),
@@ -409,8 +409,8 @@ class LiquidGridController extends ChangeNotifier {
 
   void cancelDrag() {
     if (_session == null) return;
-    LiquidGridDiagnostics.emit(
-        LiquidGridEventKind.dragCancelled, 'drag cancelled',
+    AmoebaGridDiagnostics.emit(
+        AmoebaGridEventKind.dragCancelled, 'drag cancelled',
         {'card': _session!.cardId});
     _session = null;
     notifyListeners();
@@ -418,7 +418,7 @@ class LiquidGridController extends ChangeNotifier {
 
   /// Clears every persisted override and returns to programmatic shapes.
   Future<void> resetLayout() async {
-    _layoutData = const LiquidGridLayoutData.empty();
+    _layoutData = const AmoebaGridLayoutData.empty();
     await _store.save(_layoutData);
     _recomputeCommitted();
   }

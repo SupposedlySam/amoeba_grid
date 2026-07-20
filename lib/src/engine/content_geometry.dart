@@ -14,8 +14,8 @@ import 'outline_cache.dart';
 /// rows/columns with identical runs merge into one band bridging the gap,
 /// matching the card's visual interior.
 @immutable
-class LiquidBand {
-  const LiquidBand({
+class AmoebaBand {
+  const AmoebaBand({
     required this.start,
     required this.end,
     required this.spans,
@@ -35,8 +35,8 @@ class LiquidBand {
 /// rectangle decomposition. Regions are sorted by area descending;
 /// region 0 is the largest inscribed rectangle.
 @immutable
-class LiquidRegion {
-  const LiquidRegion({
+class AmoebaRegion {
+  const AmoebaRegion({
     required this.index,
     required this.rect,
     required this.cellWidth,
@@ -56,10 +56,10 @@ class LiquidRegion {
 
 /// Shape-aware layout data for one card, in card-local pixels (origin at
 /// the shape's bounding rect top-left). Published to card content by
-/// `LiquidCardScope`; consumed by the Liquid* content widgets.
+/// `AmoebaCardScope`; consumed by the Amoeba* content widgets.
 @immutable
-class LiquidCardGeometry {
-  const LiquidCardGeometry._({
+class AmoebaCardGeometry {
+  const AmoebaCardGeometry._({
     required this.shape,
     required this.metrics,
     required this.size,
@@ -71,7 +71,7 @@ class LiquidCardGeometry {
     required this.insets,
   });
 
-  factory LiquidCardGeometry.compute(CardShape shape, GridMetrics metrics) {
+  factory AmoebaCardGeometry.compute(CardShape shape, GridMetrics metrics) {
     final bounds = metrics.shapeBounds(shape);
     final origin = bounds.topLeft;
     final path = OutlineCache.instance
@@ -79,7 +79,7 @@ class LiquidCardGeometry {
         .paths
         .shift(-origin);
     final regions = _decompose(shape, metrics, origin);
-    return LiquidCardGeometry._(
+    return AmoebaCardGeometry._(
       shape: shape,
       metrics: metrics,
       size: bounds.size,
@@ -101,26 +101,26 @@ class LiquidCardGeometry {
   /// The card outline in local coordinates (clip-accurate at rest).
   final Path path;
 
-  /// Bands for vertical flow (LiquidColumn, LiquidText).
-  final List<LiquidBand> rowBands;
+  /// Bands for vertical flow (AmoebaColumn, AmoebaText).
+  final List<AmoebaBand> rowBands;
 
-  /// Bands for horizontal flow (LiquidRow).
-  final List<LiquidBand> columnBands;
+  /// Bands for horizontal flow (AmoebaRow).
+  final List<AmoebaBand> columnBands;
 
   /// Largest rectangle fully inside the polyomino — the "safe area" clear
   /// of every notch.
   final Rect largestRect;
 
   /// Maximal-rectangle decomposition of the whole shape, area-descending.
-  final List<LiquidRegion> regions;
+  final List<AmoebaRegion> regions;
 
-  /// Accumulated padding applied by LiquidPadding / cropping, relative to
+  /// Accumulated padding applied by AmoebaPadding / cropping, relative to
   /// the card's original content box.
   final EdgeInsets insets;
 
   /// A copy with [padding] carved off every side: local origin moves to
   /// (padding.left, padding.top), spans and regions are trimmed, and
-  /// anything that falls outside disappears. Used by LiquidPadding so nested
+  /// anything that falls outside disappears. Used by AmoebaPadding so nested
   /// fluid widgets keep seeing correct geometry.
   ///
   /// With [fromOutline] (the default), padding is applied against the card
@@ -128,7 +128,7 @@ class LiquidCardGeometry {
   /// open card edge — including interior edges created by notches and steps
   /// — is inset, so content respects the padding on every card edge. Sides
   /// facing the card interior (bridged gaps, other regions) are untouched.
-  LiquidCardGeometry deflate(EdgeInsets padding, {bool fromOutline = true}) {
+  AmoebaCardGeometry deflate(EdgeInsets padding, {bool fromOutline = true}) {
     final shifted = Offset(-padding.left, -padding.top);
     final newSize = Size(
       (size.width - padding.horizontal).clamp(0.0, double.infinity),
@@ -143,8 +143,8 @@ class LiquidCardGeometry {
       return (moved.width <= 0 || moved.height <= 0) ? null : moved;
     }
 
-    List<LiquidBand> clipBands(List<LiquidBand> bands, Axis axis) {
-      final result = <LiquidBand>[];
+    List<AmoebaBand> clipBands(List<AmoebaBand> bands, Axis axis) {
+      final result = <AmoebaBand>[];
       for (final band in bands) {
         final spans = <Rect>[];
         for (final span in band.spans) {
@@ -161,16 +161,16 @@ class LiquidCardGeometry {
           end = math.max(
               end, axis == Axis.vertical ? span.bottom : span.right);
         }
-        result.add(LiquidBand(start: start, end: end, spans: spans));
+        result.add(AmoebaBand(start: start, end: end, spans: spans));
       }
       return result;
     }
 
-    final newRegions = <LiquidRegion>[];
+    final newRegions = <AmoebaRegion>[];
     for (final region in regions) {
       final clipped = clip(region.rect);
       if (clipped == null) continue;
-      newRegions.add(LiquidRegion(
+      newRegions.add(AmoebaRegion(
         index: newRegions.length,
         rect: clipped,
         cellWidth: region.cellWidth,
@@ -184,14 +184,14 @@ class LiquidCardGeometry {
     });
     final reindexed = [
       for (final (i, r) in newRegions.indexed)
-        LiquidRegion(
+        AmoebaRegion(
             index: i,
             rect: r.rect,
             cellWidth: r.cellWidth,
             cellHeight: r.cellHeight),
     ];
 
-    return LiquidCardGeometry._(
+    return AmoebaCardGeometry._(
       shape: shape,
       metrics: metrics,
       size: newSize,
@@ -212,10 +212,10 @@ class LiquidCardGeometry {
   }
 
   /// A copy scoped to a rectangular window of the current box — used when a
-  /// child is placed inside a region or the largest rect, so nested liquid
+  /// child is placed inside a region or the largest rect, so nested amoeba
   /// widgets see plain rectangular geometry. Pure windowing: no
   /// outline-based insets.
-  LiquidCardGeometry cropTo(Rect window) => deflate(
+  AmoebaCardGeometry cropTo(Rect window) => deflate(
         EdgeInsets.fromLTRB(
           window.left,
           window.top,
@@ -254,7 +254,7 @@ class LiquidCardGeometry {
 
   @override
   bool operator ==(Object other) =>
-      other is LiquidCardGeometry &&
+      other is AmoebaCardGeometry &&
       other.shape == shape &&
       other.metrics == metrics &&
       other.size == size &&
@@ -268,7 +268,7 @@ class LiquidCardGeometry {
   /// Contiguous runs of shape cells per row (vertical) or column
   /// (horizontal), merged across adjacent lines with identical runs so a
   /// band spans the bridged gap inside the card.
-  static List<LiquidBand> _bands(
+  static List<AmoebaBand> _bands(
       CardShape shape, GridMetrics metrics, Offset origin, Axis axis) {
     final vertical = axis == Axis.vertical;
     final lineStart = vertical ? shape.minRow : shape.minCol;
@@ -294,7 +294,7 @@ class LiquidCardGeometry {
     Rect lineCellRect(int line, int cross) => metrics.cellRect(
         vertical ? CellIndex(cross, line) : CellIndex(line, cross));
 
-    final bands = <LiquidBand>[];
+    final bands = <AmoebaBand>[];
     List<(int, int)>? openRuns;
     var openStartLine = 0;
     var lastLine = 0;
@@ -317,7 +317,7 @@ class LiquidCardGeometry {
             ? Rect.fromLTRB(aRect.left, start, bRect.right, end)
             : Rect.fromLTRB(start, aRect.top, end, bRect.bottom));
       }
-      bands.add(LiquidBand(start: start, end: end, spans: spans));
+      bands.add(AmoebaBand(start: start, end: end, spans: spans));
       openRuns = null;
     }
 
@@ -344,14 +344,14 @@ class LiquidCardGeometry {
 
   /// Greedy maximal-rectangle decomposition: repeatedly peel the largest
   /// inscribed rectangle (histogram method) off the remaining cells.
-  static List<LiquidRegion> _decompose(
+  static List<AmoebaRegion> _decompose(
       CardShape shape, GridMetrics metrics, Offset origin) {
     final remaining = Set.of(shape.cells);
     final minCol = shape.minCol, minRow = shape.minRow;
     final cols = shape.maxCol - minCol + 1;
     final rows = shape.maxRow - minRow + 1;
 
-    final regions = <LiquidRegion>[];
+    final regions = <AmoebaRegion>[];
     while (remaining.isNotEmpty && regions.length < 24) {
       final block = _largestBlock(remaining, minCol, minRow, cols, rows);
       final (c0, r0, w, h) = block;
@@ -362,7 +362,7 @@ class LiquidCardGeometry {
       }
       final tl = metrics.cellRect(CellIndex(c0, r0));
       final br = metrics.cellRect(CellIndex(c0 + w - 1, r0 + h - 1));
-      regions.add(LiquidRegion(
+      regions.add(AmoebaRegion(
         index: 0,
         rect: Rect.fromLTRB(tl.left, tl.top, br.right, br.bottom)
             .shift(-origin),
@@ -374,7 +374,7 @@ class LiquidCardGeometry {
         .compareTo(a.cellWidth * a.cellHeight));
     return [
       for (final (i, r) in regions.indexed)
-        LiquidRegion(
+        AmoebaRegion(
             index: i,
             rect: r.rect,
             cellWidth: r.cellWidth,

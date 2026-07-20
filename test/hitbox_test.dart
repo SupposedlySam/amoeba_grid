@@ -1,15 +1,15 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:liquid_grid/liquid_grid.dart';
-import 'package:liquid_grid/src/engine/handles.dart';
+import 'package:amoeba_grid/amoeba_grid.dart';
+import 'package:amoeba_grid/src/engine/handles.dart';
 
 /// Exhaustive grab-zone boundary tests. Geometry is pinned: cell 100px,
 /// gap 12px, pitch 112px, hitRadius 26, side interior reach 12, side
 /// tangent reach 56 (full cell edge + half gap each side), corner pull 6
 /// (outside radius 20 * 0.3), concave pull 5 (inside radius 10 * 0.3 + 2).
 void main() {
-  const config = LiquidGridConfig(
+  const config = AmoebaGridConfig(
     columns: 12,
     rows: 12,
     minCellExtent: 100,
@@ -247,16 +247,16 @@ void main() {
   });
 
   group('end to end: gutter presses resize the correct card', () {
-    Future<LiquidGridController> pumpPair(WidgetTester tester,
+    Future<AmoebaGridController> pumpPair(WidgetTester tester,
         Map<String, CardShape> shapes) async {
-      final controller = LiquidGridController(config: config);
+      final controller = AmoebaGridController(config: config);
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(
-          body: LiquidGridView(
+          body: AmoebaGridView(
             controller: controller,
             cards: [
               for (final entry in shapes.entries)
-                LiquidGridCard(
+                AmoebaGridCard(
                   id: entry.key,
                   initialShape: entry.value,
                   child: const ColoredBox(color: Colors.blueGrey),
@@ -270,11 +270,11 @@ void main() {
     }
 
     Future<void> expectResize(WidgetTester tester,
-        LiquidGridController controller, Offset press,
+        AmoebaGridController controller, Offset press,
         {required String card, required CardinalEdge edge}) async {
       final gesture =
           await tester.createGesture(kind: PointerDeviceKind.mouse);
-      await gesture.down(tester.getTopLeft(find.byType(LiquidGridView)) +
+      await gesture.down(tester.getTopLeft(find.byType(AmoebaGridView)) +
           press);
       await tester.pump();
       for (var i = 0; i < 4; i++) {
@@ -315,6 +315,49 @@ void main() {
       await expectResize(tester, controller,
           Offset(x, gutterTop + metrics.gap - 3),
           card: 'q', edge: CardinalEdge.north);
+    });
+
+    testWidgets('a revealed handle owns the press even inside the neighbor',
+        (tester) async {
+      final controller = await pumpPair(tester, {
+        'a': CardShape.rect(1, 1, 2, 2),
+        'b': CardShape.rect(3, 1, 2, 2),
+      });
+      final gutterLeft = metrics.cellRect(const CellIndex(2, 1)).right;
+      final y = metrics.cellRect(const CellIndex(2, 1)).center.dy;
+      final origin = tester.getTopLeft(find.byType(AmoebaGridView));
+
+      final gesture =
+          await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await gesture.addPointer(
+          location: origin + Offset(gutterLeft + 2, y));
+      addTearDown(gesture.removePointer);
+      await tester.pump();
+
+      // Hovering on a's side of the gutter reveals a's east handle...
+      await gesture.moveTo(origin + Offset(gutterLeft + 2, y));
+      await tester.pump();
+
+      // ...then the pointer drifts 5px INSIDE b — still within the revealed
+      // handle's zone. b's containment must not steal the press.
+      final insideB = origin + Offset(gutterLeft + metrics.gap + 5, y);
+      await gesture.moveTo(insideB);
+      await tester.pump();
+      await gesture.down(insideB);
+      await tester.pump();
+      for (var i = 0; i < 4; i++) {
+        await gesture.moveBy(const Offset(3, 0));
+        await tester.pump(const Duration(milliseconds: 8));
+      }
+
+      expect(controller.isDragging, isTrue);
+      expect(controller.session!.cardId, 'a',
+          reason: 'what you see is what you grab');
+      expect(controller.session!.kind, DragKind.resize);
+      expect(controller.session!.handle!.edge, CardinalEdge.east);
+
+      await gesture.up();
+      await tester.pumpAndSettle();
     });
   });
 }

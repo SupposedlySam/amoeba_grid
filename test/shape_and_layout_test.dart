@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:liquid_grid/liquid_grid.dart';
+import 'package:amoeba_grid/amoeba_grid.dart';
 
 void main() {
   group('CardShape', () {
@@ -38,13 +38,13 @@ void main() {
     });
   });
 
-  group('LiquidGridLayoutData', () {
-    const config = LiquidGridConfig();
+  group('AmoebaGridLayoutData', () {
+    const config = AmoebaGridConfig();
 
     test('resolves mobile-first with fallback through smaller buckets', () {
       final narrowShape = CardShape.rect(0, 0, 1, 1);
       final wideShape = CardShape.rect(0, 0, 4, 2);
-      final data = const LiquidGridLayoutData.empty()
+      final data = const AmoebaGridLayoutData.empty()
           .withBucketShapes(0, {'a': narrowShape}).withBucketShapes(
               905, {'a': wideShape});
 
@@ -56,9 +56,9 @@ void main() {
     });
 
     test('encode/decode roundtrip', () {
-      final data = const LiquidGridLayoutData.empty().withBucketShapes(
+      final data = const AmoebaGridLayoutData.empty().withBucketShapes(
           600, {'card': CardShape.rect(1, 1, 2, 3)});
-      final decoded = LiquidGridLayoutData.decode(data.encode());
+      final decoded = AmoebaGridLayoutData.decode(data.encode());
       expect(decoded.resolve('card', 800, config),
           CardShape.rect(1, 1, 2, 3));
     });

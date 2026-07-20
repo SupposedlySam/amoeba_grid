@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 /// Categories of instrumentation events emitted by the grid.
-enum LiquidGridEventKind {
+enum AmoebaGridEventKind {
   metricsResolved,
   handleHoverEnter,
   handleHoverExit,
@@ -25,10 +25,10 @@ enum LiquidGridEventKind {
 
 /// One structured instrumentation event.
 @immutable
-class LiquidGridEvent {
-  const LiquidGridEvent(this.kind, this.message, {this.data = const {}});
+class AmoebaGridEvent {
+  const AmoebaGridEvent(this.kind, this.message, {this.data = const {}});
 
-  final LiquidGridEventKind kind;
+  final AmoebaGridEventKind kind;
   final String message;
   final Map<String, Object?> data;
 
@@ -44,29 +44,29 @@ class LiquidGridEvent {
 /// the flag, so instrumentation can be left wired up in production code.
 ///
 /// ```dart
-/// LiquidGridDiagnostics.enabled = true;
-/// LiquidGridDiagnostics.events.listen(print);
+/// AmoebaGridDiagnostics.enabled = true;
+/// AmoebaGridDiagnostics.events.listen(print);
 /// // or simply:
-/// LiquidGridDiagnostics.attachDebugPrintLogger();
+/// AmoebaGridDiagnostics.attachDebugPrintLogger();
 /// ```
-abstract final class LiquidGridDiagnostics {
+abstract final class AmoebaGridDiagnostics {
   /// Master switch. Only honored in debug mode.
   static bool enabled = false;
 
   static bool get isActive => kDebugMode && enabled;
 
-  static final StreamController<LiquidGridEvent> _controller =
-      StreamController<LiquidGridEvent>.broadcast();
+  static final StreamController<AmoebaGridEvent> _controller =
+      StreamController<AmoebaGridEvent>.broadcast();
 
   /// Broadcast stream of grid events (empty unless [isActive]).
-  static Stream<LiquidGridEvent> get events => _controller.stream;
+  static Stream<AmoebaGridEvent> get events => _controller.stream;
 
-  static StreamSubscription<LiquidGridEvent>? _printSubscription;
+  static StreamSubscription<AmoebaGridEvent>? _printSubscription;
 
-  /// Pipes every event through [debugPrint] with a `[liquid_grid]` prefix.
+  /// Pipes every event through [debugPrint] with a `[amoeba_grid]` prefix.
   static void attachDebugPrintLogger() {
     _printSubscription ??=
-        events.listen((e) => debugPrint('[liquid_grid] $e'));
+        events.listen((e) => debugPrint('[amoeba_grid] $e'));
   }
 
   static void detachDebugPrintLogger() {
@@ -77,11 +77,11 @@ abstract final class LiquidGridDiagnostics {
   /// Emits an event. Cheap no-op when inactive; callers on hot paths should
   /// still prefer checking [isActive] before building expensive `data` maps.
   static void emit(
-    LiquidGridEventKind kind,
+    AmoebaGridEventKind kind,
     String message, [
     Map<String, Object?> data = const {},
   ]) {
     if (!isActive) return;
-    _controller.add(LiquidGridEvent(kind, message, data: data));
+    _controller.add(AmoebaGridEvent(kind, message, data: data));
   }
 }

@@ -15,8 +15,8 @@ import 'card_chrome.dart';
 /// One dashboard card: programmatic identity, initial footprint, content.
 /// User shaping (persisted per width bucket) overrides [initialShape].
 @immutable
-class LiquidGridCard {
-  const LiquidGridCard({
+class AmoebaGridCard {
+  const AmoebaGridCard({
     required this.id,
     required this.initialShape,
     required this.child,
@@ -35,23 +35,23 @@ class LiquidGridCard {
 /// resized strip-by-strip into polyomino silhouettes, and pushed through
 /// each other amoeba-style. See the package README for the interaction
 /// model.
-class LiquidGridView extends StatefulWidget {
-  const LiquidGridView({
+class AmoebaGridView extends StatefulWidget {
+  const AmoebaGridView({
     super.key,
     required this.controller,
     required this.cards,
     this.style,
   });
 
-  final LiquidGridController controller;
-  final List<LiquidGridCard> cards;
-  final LiquidGridStyle? style;
+  final AmoebaGridController controller;
+  final List<AmoebaGridCard> cards;
+  final AmoebaGridStyle? style;
 
   @override
-  State<LiquidGridView> createState() => _LiquidGridViewState();
+  State<AmoebaGridView> createState() => _AmoebaGridViewState();
 }
 
-class _LiquidGridViewState extends State<LiquidGridView>
+class _AmoebaGridViewState extends State<AmoebaGridView>
     with TickerProviderStateMixin {
   final ScrollController _horizontal = ScrollController();
   final ScrollController _vertical = ScrollController();
@@ -81,7 +81,7 @@ class _LiquidGridViewState extends State<LiquidGridView>
       {for (final card in widget.cards) card.id: card.initialShape};
 
   @override
-  void didUpdateWidget(LiquidGridView oldWidget) {
+  void didUpdateWidget(AmoebaGridView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
       oldWidget.controller.removeListener(_onControllerChanged);
@@ -108,6 +108,12 @@ class _LiquidGridViewState extends State<LiquidGridView>
     if (widget.controller.isDragging) return;
     final point = event.localPosition;
 
+    // Sticky reveal: while the pointer stays inside the revealed handle's
+    // grab zone it remains authoritative — even where that zone dips into
+    // a neighboring card. What you see is what you grab.
+    final held = _hoveredHandle;
+    if (held != null && held.hits(point)) return;
+
     final interaction = _interactionAt(point, metrics);
     final cardId = interaction?.$1;
     final hit = interaction?.$2;
@@ -122,11 +128,11 @@ class _LiquidGridViewState extends State<LiquidGridView>
 
     if (cardId != _hoveredCardId || hit != _hoveredHandle) {
       if (hit != null && hit != _hoveredHandle) {
-        LiquidGridDiagnostics.emit(LiquidGridEventKind.handleHoverEnter,
+        AmoebaGridDiagnostics.emit(AmoebaGridEventKind.handleHoverEnter,
             'handle hover', {'handle': hit.debugLabel});
         _handleReveal.forward(from: _hoveredHandle == null ? 0 : 0.4);
       } else if (hit == null && _hoveredHandle != null) {
-        LiquidGridDiagnostics.emit(LiquidGridEventKind.handleHoverExit,
+        AmoebaGridDiagnostics.emit(AmoebaGridEventKind.handleHoverExit,
             'handle hover exit', {'handle': _hoveredHandle!.debugLabel});
         _handleReveal.reverse();
       }
@@ -149,7 +155,7 @@ class _LiquidGridViewState extends State<LiquidGridView>
   }
 
   /// Cards for hit testing, topmost first.
-  Iterable<LiquidGridCard> _orderedCards() => widget.cards.reversed;
+  Iterable<AmoebaGridCard> _orderedCards() => widget.cards.reversed;
 
   // --- Drag ----------------------------------------------------------------
 
@@ -160,8 +166,14 @@ class _LiquidGridViewState extends State<LiquidGridView>
   (Offset downPosition, String cardId, GridHandle? handle)? _pendingGrab;
 
   bool _capturePanDown(Offset point, GridMetrics metrics) {
-    final interaction = _interactionAt(point, metrics);
-    LiquidGridDiagnostics.emit(LiquidGridEventKind.pointerDown, 'pointer down', {
+    // A revealed handle owns the press wherever its zone reaches; a fresh
+    // resolution here would let a neighbor's containment steal the visible
+    // affordance out from under the pointer.
+    final held = _hoveredHandle;
+    final interaction = (held != null && held.hits(point))
+        ? (held.cardId, held)
+        : _interactionAt(point, metrics);
+    AmoebaGridDiagnostics.emit(AmoebaGridEventKind.pointerDown, 'pointer down', {
       'at': '(${point.dx.toStringAsFixed(0)},${point.dy.toStringAsFixed(0)})',
       'hit': interaction == null
           ? 'none'
@@ -194,7 +206,7 @@ class _LiquidGridViewState extends State<LiquidGridView>
     final grab = _pendingGrab;
     _pendingGrab = null;
     if (grab == null) {
-      LiquidGridDiagnostics.emit(LiquidGridEventKind.gestureRejected,
+      AmoebaGridDiagnostics.emit(AmoebaGridEventKind.gestureRejected,
           'pan accepted but no pending grab');
       return;
     }
@@ -279,7 +291,7 @@ class _LiquidGridViewState extends State<LiquidGridView>
       position.jumpTo((position.pixels + dy)
           .clamp(position.minScrollExtent, position.maxScrollExtent));
     }
-    LiquidGridDiagnostics.emit(LiquidGridEventKind.edgeAutoScroll,
+    AmoebaGridDiagnostics.emit(AmoebaGridEventKind.edgeAutoScroll,
         'edge auto-scroll', {'dx': dx, 'dy': dy});
     widget.controller.updateDrag(viewportPoint + _scrollOffset());
   }
@@ -289,7 +301,7 @@ class _LiquidGridViewState extends State<LiquidGridView>
   @override
   Widget build(BuildContext context) {
     final style =
-        widget.style ?? LiquidGridStyle.fromTheme(Theme.of(context));
+        widget.style ?? AmoebaGridStyle.fromTheme(Theme.of(context));
     return LayoutBuilder(
       builder: (context, constraints) {
         final metrics = GridMetrics.resolve(
@@ -334,12 +346,12 @@ class _LiquidGridViewState extends State<LiquidGridView>
     );
   }
 
-  Widget _buildCanvas(GridMetrics metrics, LiquidGridStyle style) {
+  Widget _buildCanvas(GridMetrics metrics, AmoebaGridStyle style) {
     final controller = widget.controller;
     final session = controller.session;
 
     final cards = <Widget>[];
-    LiquidGridCard? aggressorCard;
+    AmoebaGridCard? aggressorCard;
     for (final card in widget.cards) {
       if (session?.cardId == card.id) {
         aggressorCard = card;
@@ -425,8 +437,8 @@ class _LiquidGridViewState extends State<LiquidGridView>
     );
   }
 
-  Widget _buildCard(LiquidGridCard card, GridMetrics metrics,
-      LiquidGridStyle style, DragSession? session) {
+  Widget _buildCard(AmoebaGridCard card, GridMetrics metrics,
+      AmoebaGridStyle style, DragSession? session) {
     final isAggressor = session != null && session.cardId == card.id;
     final isMoving = isAggressor && session.kind == DragKind.move;
 
@@ -441,7 +453,7 @@ class _LiquidGridViewState extends State<LiquidGridView>
 
     return Positioned.fill(
       key: ValueKey(card.id),
-      child: LiquidCardSurface(
+      child: AmoebaCardSurface(
         shape: shape,
         metrics: metrics,
         style: style,
@@ -476,14 +488,14 @@ class _CardPanRecognizer extends PanGestureRecognizer {
 
   @override
   void acceptGesture(int pointer) {
-    LiquidGridDiagnostics.emit(
-        LiquidGridEventKind.gestureAccepted, 'card pan won the arena');
+    AmoebaGridDiagnostics.emit(
+        AmoebaGridEventKind.gestureAccepted, 'card pan won the arena');
     super.acceptGesture(pointer);
   }
 
   @override
   void rejectGesture(int pointer) {
-    LiquidGridDiagnostics.emit(LiquidGridEventKind.gestureRejected,
+    AmoebaGridDiagnostics.emit(AmoebaGridEventKind.gestureRejected,
         'card pan lost the arena (another recognizer took the drag)');
     super.rejectGesture(pointer);
   }

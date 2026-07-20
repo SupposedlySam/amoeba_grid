@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:liquid_grid/liquid_grid.dart';
+import 'package:amoeba_grid/amoeba_grid.dart';
 
 void main() {
-  const config = LiquidGridConfig(
+  const config = AmoebaGridConfig(
       columns: 8, rows: 8, gap: 10, minCellExtent: 80, maxCellExtent: 80);
   final metrics = GridMetrics.resolve(config, const Size(800, 800));
 
@@ -12,25 +12,25 @@ void main() {
       const [CellIndex(0, 0), CellIndex(0, 1), CellIndex(1, 1)]);
 
   Widget host(CardShape shape, Widget child) {
-    final geometry = LiquidCardGeometry.compute(shape, metrics);
+    final geometry = AmoebaCardGeometry.compute(shape, metrics);
     return MaterialApp(
       home: Scaffold(
         body: Align(
           alignment: Alignment.topLeft,
           child: SizedBox.fromSize(
             size: geometry.size,
-            child: LiquidCardScope(geometry: geometry, child: child),
+            child: AmoebaCardScope(geometry: geometry, child: child),
           ),
         ),
       ),
     );
   }
 
-  testWidgets('LiquidContentArea places its child in the largest rect',
+  testWidgets('AmoebaContentArea places its child in the largest rect',
       (tester) async {
     await tester.pumpWidget(host(
       lShape,
-      const LiquidContentArea(child: SizedBox.expand(key: Key('content'))),
+      const AmoebaContentArea(child: SizedBox.expand(key: Key('content'))),
     ));
     final size = tester.getSize(find.byKey(const Key('content')));
     // Largest rect of the L is the 2-cell strip (170 x 80) — either the
@@ -38,12 +38,12 @@ void main() {
     expect(size.width * size.height, closeTo(170 * 80, 1));
   });
 
-  testWidgets('LiquidRegions builds one child per rectangular region',
+  testWidgets('AmoebaRegions builds one child per rectangular region',
       (tester) async {
     final seen = <int>[];
     await tester.pumpWidget(host(
       lShape,
-      LiquidRegions(
+      AmoebaRegions(
         builder: (context, region) {
           seen.add(region.index);
           return Text('r${region.index}');
@@ -55,11 +55,11 @@ void main() {
     expect(find.text('r1'), findsOneWidget);
   });
 
-  testWidgets('LiquidColumn narrows children to the band at their position',
+  testWidgets('AmoebaColumn narrows children to the band at their position',
       (tester) async {
     await tester.pumpWidget(host(
       lShape,
-      const LiquidColumn(
+      const AmoebaColumn(
         children: [
           SizedBox(key: Key('top'), height: 40),
           SizedBox(key: Key('mid'), height: 40),
@@ -75,17 +75,17 @@ void main() {
         reason: 'bottom band is the 2-cell foot');
   });
 
-  testWidgets('LiquidText fills the arm with short lines and the foot wide',
+  testWidgets('AmoebaText fills the arm with short lines and the foot wide',
       (tester) async {
     await tester.pumpWidget(host(
       lShape,
-      const LiquidText(
+      const AmoebaText(
         'alpha beta gamma delta epsilon zeta eta theta iota kappa lambda '
         'mu nu xi omicron pi rho sigma tau upsilon phi chi psi omega',
         style: TextStyle(fontSize: 12),
       ),
     ));
-    final render = tester.renderObject<RenderBox>(find.byType(LiquidText));
+    final render = tester.renderObject<RenderBox>(find.byType(AmoebaText));
     expect(render.size.width, greaterThan(0));
     // Smoke: laid out without exceptions and produced paint content.
     expect(tester.takeException(), isNull);
@@ -98,11 +98,11 @@ void main() {
         body: Column(
           children: [
             Expanded(
-              child: LiquidColumn(children: [Text('plain')]),
+              child: AmoebaColumn(children: [Text('plain')]),
             ),
-            Expanded(child: LiquidText('no scope here')),
+            Expanded(child: AmoebaText('no scope here')),
             Expanded(
-              child: LiquidContentArea(child: Text('safe')),
+              child: AmoebaContentArea(child: Text('safe')),
             ),
           ],
         ),
@@ -113,14 +113,14 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('LiquidPadding republishes deflated geometry', (tester) async {
-    LiquidCardGeometry? inner;
+  testWidgets('AmoebaPadding republishes deflated geometry', (tester) async {
+    AmoebaCardGeometry? inner;
     await tester.pumpWidget(host(
       lShape,
-      LiquidPadding(
+      AmoebaPadding(
         padding: const EdgeInsets.all(10),
         child: Builder(builder: (context) {
-          inner = LiquidCardScope.maybeOf(context);
+          inner = AmoebaCardScope.maybeOf(context);
           return const SizedBox();
         }),
       ),
@@ -128,7 +128,7 @@ void main() {
     expect(inner, isNotNull);
     expect(inner!.insets, const EdgeInsets.all(10));
     expect(inner!.size.width,
-        closeTo(LiquidCardGeometry.compute(lShape, metrics).size.width - 20,
+        closeTo(AmoebaCardGeometry.compute(lShape, metrics).size.width - 20,
             0.001));
   });
 }

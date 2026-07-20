@@ -9,7 +9,7 @@ import '../foundation/config.dart';
 /// Resolved pixel geometry for one viewport size.
 ///
 /// The grid uses square units. The config's column/row counts are minimums:
-/// when the viewport fits more units at [LiquidGridConfig.maxCellExtent],
+/// when the viewport fits more units at [AmoebaGridConfig.maxCellExtent],
 /// the field grows to fill it. Cell extent flexes between the config's min
 /// and max; when even the minimum count can't fit at [minCellExtent], the
 /// content overflows and pans.
@@ -27,7 +27,7 @@ class GridMetrics {
   /// card placed on a wide window can never fall outside the pannable area
   /// when the window shrinks.
   factory GridMetrics.resolve(
-    LiquidGridConfig config,
+    AmoebaGridConfig config,
     Size viewportSize, {
     int minColumns = 0,
     int minRows = 0,
@@ -53,7 +53,7 @@ class GridMetrics {
     );
   }
 
-  final LiquidGridConfig config;
+  final AmoebaGridConfig config;
   final double cellExtent;
   final Size viewportSize;
 

@@ -11,14 +11,14 @@ import 'diagnostics.dart';
 /// The package stays plugin-free: implement this with whatever your app
 /// already uses (`shared_preferences`, a file, a server). The demo app ships
 /// a `shared_preferences` implementation.
-abstract interface class LiquidGridStorage {
+abstract interface class AmoebaGridStorage {
   Future<String?> read(String key);
   Future<void> write(String key, String value);
 }
 
 /// In-memory storage; layouts survive rebuilds but not app restarts.
 /// Useful as a default and in tests.
-class LiquidGridMemoryStorage implements LiquidGridStorage {
+class AmoebaGridMemoryStorage implements AmoebaGridStorage {
   final Map<String, String> _values = {};
 
   @override
@@ -37,10 +37,10 @@ class LiquidGridMemoryStorage implements LiquidGridStorage {
 /// narrow window carries up to wider windows until the user overrides it
 /// there too — mobile-first, like CSS breakpoints.
 @immutable
-class LiquidGridLayoutData {
-  const LiquidGridLayoutData(this.overrides);
+class AmoebaGridLayoutData {
+  const AmoebaGridLayoutData(this.overrides);
 
-  const LiquidGridLayoutData.empty() : overrides = const {};
+  const AmoebaGridLayoutData.empty() : overrides = const {};
 
   /// breakpoint -> cardId -> shape
   final Map<double, Map<String, CardShape>> overrides;
@@ -48,7 +48,7 @@ class LiquidGridLayoutData {
   static const int _version = 1;
 
   CardShape? resolve(String cardId, double viewportWidth,
-      LiquidGridConfig config) {
+      AmoebaGridConfig config) {
     for (final b in config.breakpoints.reversed) {
       if (b > viewportWidth) continue;
       final shape = overrides[b]?[cardId];
@@ -58,13 +58,13 @@ class LiquidGridLayoutData {
   }
 
   /// Returns a copy with [shapes] written into [bucket].
-  LiquidGridLayoutData withBucketShapes(
+  AmoebaGridLayoutData withBucketShapes(
       double bucket, Map<String, CardShape> shapes) {
     final next = {
       for (final e in overrides.entries) e.key: Map.of(e.value),
     };
     (next[bucket] ??= {}).addAll(shapes);
-    return LiquidGridLayoutData(next);
+    return AmoebaGridLayoutData(next);
   }
 
   String encode() => jsonEncode({
@@ -78,10 +78,10 @@ class LiquidGridLayoutData {
         },
       });
 
-  static LiquidGridLayoutData decode(String json) {
+  static AmoebaGridLayoutData decode(String json) {
     final root = jsonDecode(json) as Map<String, dynamic>;
     final rawOverrides = root['overrides'] as Map<String, dynamic>? ?? {};
-    return LiquidGridLayoutData({
+    return AmoebaGridLayoutData({
       for (final e in rawOverrides.entries)
         double.parse(e.key): {
           for (final card in (e.value as Map<String, dynamic>).entries)
@@ -92,32 +92,32 @@ class LiquidGridLayoutData {
 }
 
 /// Load/save helper shared by the controller.
-class LiquidGridLayoutStore {
-  LiquidGridLayoutStore(this.storage, {this.storageKey = defaultKey});
+class AmoebaGridLayoutStore {
+  AmoebaGridLayoutStore(this.storage, {this.storageKey = defaultKey});
 
-  static const String defaultKey = 'liquid_grid.layout.v1';
+  static const String defaultKey = 'amoeba_grid.layout.v1';
 
-  final LiquidGridStorage storage;
+  final AmoebaGridStorage storage;
   final String storageKey;
 
-  Future<LiquidGridLayoutData> load() async {
+  Future<AmoebaGridLayoutData> load() async {
     try {
       final raw = await storage.read(storageKey);
-      if (raw == null) return const LiquidGridLayoutData.empty();
-      final data = LiquidGridLayoutData.decode(raw);
-      LiquidGridDiagnostics.emit(LiquidGridEventKind.layoutLoaded,
+      if (raw == null) return const AmoebaGridLayoutData.empty();
+      final data = AmoebaGridLayoutData.decode(raw);
+      AmoebaGridDiagnostics.emit(AmoebaGridEventKind.layoutLoaded,
           'loaded persisted layout', {'buckets': data.overrides.keys.toList()});
       return data;
     } catch (error) {
-      LiquidGridDiagnostics.emit(LiquidGridEventKind.layoutLoaded,
+      AmoebaGridDiagnostics.emit(AmoebaGridEventKind.layoutLoaded,
           'failed to load layout, starting fresh', {'error': '$error'});
-      return const LiquidGridLayoutData.empty();
+      return const AmoebaGridLayoutData.empty();
     }
   }
 
-  Future<void> save(LiquidGridLayoutData data) async {
+  Future<void> save(AmoebaGridLayoutData data) async {
     await storage.write(storageKey, data.encode());
-    LiquidGridDiagnostics.emit(LiquidGridEventKind.layoutSaved, 'layout saved',
+    AmoebaGridDiagnostics.emit(AmoebaGridEventKind.layoutSaved, 'layout saved',
         {'buckets': data.overrides.keys.toList()});
   }
 }

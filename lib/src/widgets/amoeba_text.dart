@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../engine/content_geometry.dart';
-import 'liquid_card_scope.dart';
+import 'amoeba_card_scope.dart';
 
 /// Text that wraps around the card's notches — Flutter has no CSS
 /// `shape-outside`, but fluid shapes are cell-quantized, so lines are laid
@@ -10,8 +10,8 @@ import 'liquid_card_scope.dart';
 ///
 /// Trade-offs versus [Text]: no selection, greedy word wrapping, single
 /// style. Outside a fluid card it behaves like ordinary wrapped text.
-class LiquidText extends LeafRenderObjectWidget {
-  const LiquidText(this.text, {super.key, this.style, this.lineSpacing = 0});
+class AmoebaText extends LeafRenderObjectWidget {
+  const AmoebaText(this.text, {super.key, this.style, this.lineSpacing = 0});
 
   final String text;
   final TextStyle? style;
@@ -25,21 +25,21 @@ class LiquidText extends LeafRenderObjectWidget {
   }
 
   @override
-  RenderLiquidText createRenderObject(BuildContext context) => RenderLiquidText(
+  RenderAmoebaText createRenderObject(BuildContext context) => RenderAmoebaText(
         text: text,
         style: _effectiveStyle(context),
         lineSpacing: lineSpacing,
-        geometry: LiquidCardScope.maybeOf(context),
+        geometry: AmoebaCardScope.maybeOf(context),
         textDirection: Directionality.of(context),
       );
 
   @override
-  void updateRenderObject(BuildContext context, RenderLiquidText renderObject) {
+  void updateRenderObject(BuildContext context, RenderAmoebaText renderObject) {
     renderObject
       ..text = text
       ..style = _effectiveStyle(context)
       ..lineSpacing = lineSpacing
-      ..geometry = LiquidCardScope.maybeOf(context)
+      ..geometry = AmoebaCardScope.maybeOf(context)
       ..textDirection = Directionality.of(context);
   }
 }
@@ -51,8 +51,8 @@ class _Line {
   final Offset offset;
 }
 
-class RenderLiquidText extends RenderBox {
-  RenderLiquidText({
+class RenderAmoebaText extends RenderBox {
+  RenderAmoebaText({
     required this._text,
     required this._style,
     required this._lineSpacing,
@@ -81,8 +81,8 @@ class RenderLiquidText extends RenderBox {
     markNeedsLayout();
   }
 
-  LiquidCardGeometry? _geometry;
-  set geometry(LiquidCardGeometry? value) {
+  AmoebaCardGeometry? _geometry;
+  set geometry(AmoebaCardGeometry? value) {
     if (value == _geometry) return;
     _geometry = value;
     markNeedsLayout();
@@ -122,7 +122,7 @@ class RenderLiquidText extends RenderBox {
 
     final bands = _geometry?.rowBands ??
         [
-          LiquidBand(
+          AmoebaBand(
               start: 0, end: size.height, spans: [Offset.zero & size]),
         ];
 
