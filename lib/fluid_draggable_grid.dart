@@ -7,6 +7,8 @@
 library;
 
 export 'src/controller.dart' show DragKind, DragSession, FluidGridController;
+export 'src/engine/content_geometry.dart'
+    show FluidBand, FluidCardGeometry, FluidRegion;
 export 'src/engine/drag_engine.dart' show SubmissiveState;
 export 'src/engine/grid_metrics.dart' show GridMetrics;
 export 'src/engine/handles.dart' show GridHandle;
@@ -22,4 +24,9 @@ export 'src/foundation/storage.dart'
         FluidGridMemoryStorage,
         FluidGridStorage;
 export 'src/widgets/card_chrome.dart' show FluidGridStyle;
+export 'src/widgets/fluid_card_scope.dart'
+    show FluidCardScope, FluidContentArea, FluidPadding, FluidRegions;
+export 'src/widgets/fluid_flow.dart'
+    show FluidColumn, FluidFlow, FluidFlowAlignment, FluidRow;
 export 'src/widgets/fluid_grid_view.dart' show FluidGridCard, FluidGridView;
+export 'src/widgets/fluid_text.dart' show FluidText;

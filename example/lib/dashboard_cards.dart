@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:fluid_draggable_grid/fluid_draggable_grid.dart';
 import 'package:flutter/material.dart';
 
 /// Adaptive card scaffold: full layout when there's room, compact icon+title
@@ -156,6 +157,9 @@ class WeatherCard extends StatelessWidget {
   }
 }
 
+/// Tasks flow through the card's shape with [FluidColumn]: rows narrow to
+/// the band they land in, so carving a notch into the card reflows the list
+/// around it instead of clipping it.
 class TasksCard extends StatefulWidget {
   const TasksCard({super.key});
 
@@ -170,52 +174,150 @@ class _TasksCardState extends State<TasksCard> {
     ('Design corner handles', true),
     ('Amoeba morph polish', false),
     ('Persistence buckets QA', false),
+    ('FluidText line breaks', false),
   ];
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return CardScaffold(
-      icon: Icons.check_circle_outline,
-      title: 'TASKS',
-      child: ListView.builder(
-        padding: EdgeInsets.zero,
-        itemCount: _tasks.length,
-        itemBuilder: (context, index) {
-          final (label, done) = _tasks[index];
-          return InkWell(
-            borderRadius: BorderRadius.circular(8),
-            onTap: () =>
-                setState(() => _tasks[index] = (label, !done)),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Row(
-                children: [
-                  Icon(
-                    done
-                        ? Icons.check_circle
-                        : Icons.radio_button_unchecked,
-                    size: 18,
-                    color: done
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.outline,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        decoration:
-                            done ? TextDecoration.lineThrough : null,
-                        color: done
-                            ? theme.colorScheme.onSurfaceVariant
-                            : theme.colorScheme.onSurface,
+    return FluidPadding(
+      padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
+      child: FluidColumn(
+        spacing: 2,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.check_circle_outline,
+                  size: 18, color: theme.colorScheme.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text('TASKS',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      letterSpacing: 0.4,
+                    )),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          for (final (index, (label, done)) in _tasks.indexed)
+            InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () =>
+                  setState(() => _tasks[index] = (label, !done)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  children: [
+                    Icon(
+                      done
+                          ? Icons.check_circle
+                          : Icons.radio_button_unchecked,
+                      size: 18,
+                      color: done
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.outline,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          decoration:
+                              done ? TextDecoration.lineThrough : null,
+                          color: done
+                              ? theme.colorScheme.onSurfaceVariant
+                              : theme.colorScheme.onSurface,
+                        ),
                       ),
                     ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// [FluidText] demo: prose wraps band by band around whatever notches you
+/// carve into the card — Flutter's answer to CSS `shape-outside`.
+class NotesCard extends StatelessWidget {
+  const NotesCard({super.key});
+
+  static const _prose =
+      'Fluid cards are not rectangles. Drag a side handle and only that '
+      'strip moves; pull the corner and the whole edge follows. This '
+      'paragraph is laid out line by line against the free span of every '
+      'band in the shape, so carve a notch into this card and watch the '
+      'words flow around it like water finding its level. Drop previews '
+      'snap at half-cell crossings, gaps stay honest, and everything you '
+      'shape here is remembered per viewport width.';
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return FluidPadding(
+      padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
+      child: FluidText(
+        _prose,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+          height: 1.35,
+        ),
+        lineSpacing: 2,
+      ),
+    );
+  }
+}
+
+/// [FluidRegions] demo: the shape's maximal-rectangle decomposition is
+/// rendered live — reshape the card and watch the regions re-partition.
+class RegionsCard extends StatelessWidget {
+  const RegionsCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return FluidPadding(
+      padding: const EdgeInsets.all(10),
+      child: FluidRegions(
+        builder: (context, region) {
+          final tint = Color.lerp(
+              theme.colorScheme.primary,
+              theme.colorScheme.tertiary,
+              (region.index * 0.28) % 1)!;
+          return Padding(
+            padding: const EdgeInsets.all(3),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: tint.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+                border:
+                    Border.all(color: tint.withValues(alpha: 0.45)),
+              ),
+              child: Center(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Text(
+                      region.isLargest
+                          ? 'REGION ${region.index}\n'
+                              '${region.cellWidth}x${region.cellHeight} · largest'
+                          : 'R${region.index} · '
+                              '${region.cellWidth}x${region.cellHeight}',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.labelSmall
+                          ?.copyWith(color: tint, letterSpacing: 0.6),
+                    ),
                   ),
-                ],
+                ),
               ),
             ),
           );

@@ -83,21 +83,24 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
+  /// Rect-style cards sit inside a [FluidContentArea] (they stay
+  /// rectangular but dodge notches); the tasks, notes, and regions cards
+  /// use the flow widgets directly and genuinely reshape with the card.
   List<FluidGridCard> _cards(BuildContext context) => [
         FluidGridCard(
           id: 'revenue',
           initialShape: CardShape.rect(0, 0, 3, 2),
-          child: const RevenueCard(),
+          child: const FluidContentArea(child: RevenueCard()),
         ),
         FluidGridCard(
           id: 'activity',
           initialShape: CardShape.rect(3, 0, 3, 2),
-          child: const ActivityCard(),
+          child: const FluidContentArea(child: ActivityCard()),
         ),
         FluidGridCard(
           id: 'weather',
           initialShape: CardShape.rect(6, 0, 2, 2),
-          child: const WeatherCard(),
+          child: const FluidContentArea(child: WeatherCard()),
         ),
         FluidGridCard(
           id: 'tasks',
@@ -107,17 +110,27 @@ class _DashboardPageState extends State<DashboardPage> {
         FluidGridCard(
           id: 'nowPlaying',
           initialShape: CardShape.rect(2, 2, 3, 2),
-          child: const NowPlayingCard(),
+          child: const FluidContentArea(child: NowPlayingCard()),
         ),
         FluidGridCard(
           id: 'storage',
           initialShape: CardShape.rect(5, 2, 3, 2),
-          child: const StorageCard(),
+          child: const FluidContentArea(child: StorageCard()),
+        ),
+        FluidGridCard(
+          id: 'notes',
+          initialShape: CardShape.rect(2, 4, 3, 3),
+          child: const NotesCard(),
+        ),
+        FluidGridCard(
+          id: 'regions',
+          initialShape: CardShape.rect(5, 4, 3, 3),
+          child: const RegionsCard(),
         ),
         FluidGridCard(
           id: 'team',
-          initialShape: CardShape.rect(2, 4, 4, 1),
-          child: const TeamCard(),
+          initialShape: CardShape.rect(0, 5, 2, 1),
+          child: const FluidContentArea(child: TeamCard()),
         ),
       ];
 

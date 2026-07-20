@@ -90,6 +90,38 @@ if (kDebugMode) {
 }
 ```
 
+## Shape-aware content
+
+Flutter's layout protocol is rectangular (`BoxConstraints`), so plain
+widgets can't flow around a notch — but fluid shapes are cell-quantized,
+which makes shape-aware layout tractable. Every card's child is wrapped in
+a `FluidCardScope` publishing its `FluidCardGeometry` (bands, largest
+inscribed rectangle, maximal-rectangle regions), and a small family of
+content widgets builds on it:
+
+| Widget | What it does |
+| --- | --- |
+| `FluidContentArea` | SafeArea for notches: lays its child in the largest rectangle fully inside the shape |
+| `FluidRegions` | One builder call per rectangular sub-region of the shape (area-descending) |
+| `FluidColumn` / `FluidRow` / `FluidFlow` | Flow children along an axis, constraining each to the free span at its position |
+| `FluidText` | Text that wraps band-by-band around notches (a `shape-outside` equivalent) |
+| `FluidPadding` | Padding that republishes correctly-deflated geometry to fluid widgets below |
+
+All of them degrade gracefully to plain rectangular behavior outside a
+fluid card. Content is laid out against the settled target shape while the
+morph clip animates, so reshaping never causes per-frame reflow jitter.
+
+```dart
+FluidGridCard(
+  id: 'notes',
+  initialShape: CardShape.rect(2, 4, 3, 3),
+  child: FluidPadding(
+    padding: const EdgeInsets.all(16),
+    child: FluidText('Words flow around whatever you carve…'),
+  ),
+);
+```
+
 ## Interaction model
 
 | Gesture | Result |

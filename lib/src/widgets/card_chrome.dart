@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import '../engine/grid_metrics.dart';
 import '../engine/handles.dart';
 import '../foundation/cell.dart';
+import '../engine/content_geometry.dart';
 import '../engine/outline.dart';
 import '../engine/outline_cache.dart';
+import 'fluid_card_scope.dart';
 
 /// Visual styling for the grid chrome. Card *content* styles itself; this
 /// covers the painted card surfaces, handles, previews, and backdrop.
@@ -251,6 +253,8 @@ class _FluidCardSurfaceState extends State<FluidCardSurface>
   Path? _fromPath;
   late Rect _fromBounds = _bounds(_target);
   late Rect _toBounds = _fromBounds;
+  late FluidCardGeometry _geometry =
+      FluidCardGeometry.compute(_target, widget.metrics);
 
   Path _outline(CardShape shape) =>
       OutlineCache.instance.outlineFor(shape, widget.metrics).paths;
@@ -286,6 +290,7 @@ class _FluidCardSurfaceState extends State<FluidCardSurface>
       _target = widget.shape;
       _toPath = _outline(_target);
       _toBounds = _bounds(_target);
+      _geometry = FluidCardGeometry.compute(_target, widget.metrics);
       if (metricsChanged && oldWidget.metrics.viewportSize !=
           widget.metrics.viewportSize) {
         // Resizes retarget instantly; morphing across metric spaces looks
@@ -309,7 +314,9 @@ class _FluidCardSurfaceState extends State<FluidCardSurface>
       animation: _morph,
       builder: (context, _) {
         final path = _currentPath;
-        final bounds = _currentBounds;
+        // Content lays out against the settled target shape (stable
+        // geometry, no per-frame reflow); the morphing clip reveals it.
+        final contentRect = _toBounds.shift(widget.visualOffset);
         return Stack(
           clipBehavior: Clip.none,
           children: [
@@ -326,10 +333,13 @@ class _FluidCardSurfaceState extends State<FluidCardSurface>
               ),
             ),
             Positioned.fromRect(
-              rect: bounds,
+              rect: contentRect,
               child: ClipPath(
-                clipper: _ShiftedPathClipper(path, bounds.topLeft),
-                child: widget.child,
+                clipper: _ShiftedPathClipper(path, contentRect.topLeft),
+                child: FluidCardScope(
+                  geometry: _geometry,
+                  child: widget.child,
+                ),
               ),
             ),
           ],
