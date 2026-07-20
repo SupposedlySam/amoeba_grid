@@ -77,6 +77,58 @@ void main() {
       expect(hit, corner);
     });
 
+    test('side handles cover their entire cell edge, not just the midpoint',
+        () {
+      final handles =
+          handlesFor('x', CardShape.rect(0, 0, 2, 2), metrics);
+      final north = handles.firstWhere((h) =>
+          !h.isCorner &&
+          h.edge == CardinalEdge.north &&
+          h.cell == const CellIndex(0, 0));
+      // Near the end of the cell edge, well away from the midpoint circle.
+      final nearEdgeEnd =
+          north.center + Offset(metrics.cellExtent * 0.4, -4);
+      expect(north.hits(nearEdgeEnd), isTrue);
+    });
+
+    test('adjacent cards: each side of the gutter grabs its own card', () {
+      final a = CardShape.rect(0, 0, 2, 2);
+      final b = CardShape.rect(2, 0, 2, 2);
+      final cards = [('a', a), ('b', b)];
+      final aRightEdge = metrics.cellRect(const CellIndex(1, 0)).right;
+      final y = metrics.cellRect(const CellIndex(1, 0)).center.dy;
+
+      final onLeftHalf =
+          interactionAt(Offset(aRightEdge + metrics.gap * 0.25, y),
+              cards, metrics);
+      expect(onLeftHalf?.$1, 'a');
+      expect(onLeftHalf?.$2?.edge, CardinalEdge.east);
+
+      final onRightHalf =
+          interactionAt(Offset(aRightEdge + metrics.gap * 0.75, y),
+              cards, metrics);
+      expect(onRightHalf?.$1, 'b');
+      expect(onRightHalf?.$2?.edge, CardinalEdge.west);
+    });
+
+    test('a press inside a card is never stolen by a neighbor handle', () {
+      final a = CardShape.rect(0, 0, 2, 2);
+      final b = CardShape.rect(2, 0, 2, 2);
+      final cards = [('a', a), ('b', b)];
+      final bLeftEdge = metrics.cellRect(const CellIndex(2, 0)).left;
+      final y = metrics.cellRect(const CellIndex(2, 0)).center.dy;
+
+      // 6px inside b: b's own west handle (its interior band), never a's.
+      final nearEdge = interactionAt(Offset(bLeftEdge + 6, y), cards, metrics);
+      expect(nearEdge?.$1, 'b');
+      expect(nearEdge?.$2?.edge, CardinalEdge.west);
+
+      // Deep inside b: b's body — a move, not any handle.
+      final deep = interactionAt(Offset(bLeftEdge + 40, y), cards, metrics);
+      expect(deep?.$1, 'b');
+      expect(deep?.$2, isNull);
+    });
+
     test('handle grab zones do not reach deep into card content', () {
       final handles =
           handlesFor('x', CardShape.rect(0, 0, 2, 2), metrics);

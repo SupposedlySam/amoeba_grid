@@ -108,30 +108,16 @@ class _FluidGridViewState extends State<FluidGridView>
     if (widget.controller.isDragging) return;
     final point = event.localPosition;
 
-    String? cardId;
-    List<GridHandle> handles = const [];
-    GridHandle? hit;
-
-    // Check the previously hovered card first for cheap continuity, then
-    // every card. Handles protrude past the outline, so hit handles before
-    // testing containment.
-    for (final card in _orderedCards()) {
-      final shape = widget.controller.effectiveShape(card.id);
-      if (shape == null) continue;
-      final cardHandles =
-          handlesFor(card.id, shape, metrics);
-      final handleHit = hitTestHandles(cardHandles, point);
-      final inside = handleHit != null ||
-          OutlineCache.instance
-              .outlineFor(shape, metrics)
-              .paths
-              .contains(point);
-      if (inside) {
-        cardId = card.id;
-        handles = cardHandles;
-        hit = handleHit;
-        break;
-      }
+    final interaction = _interactionAt(point, metrics);
+    final cardId = interaction?.$1;
+    final hit = interaction?.$2;
+    final List<GridHandle> handles;
+    if (cardId == null) {
+      handles = const [];
+    } else {
+      final shape = widget.controller.effectiveShape(cardId);
+      handles =
+          shape == null ? const [] : handlesFor(cardId, shape, metrics);
     }
 
     if (cardId != _hoveredCardId || hit != _hoveredHandle) {
@@ -193,20 +179,15 @@ class _FluidGridViewState extends State<FluidGridView>
 
   (String cardId, GridHandle? handle)? _interactionAt(
       Offset point, GridMetrics metrics) {
-    for (final card in _orderedCards()) {
-      final shape = widget.controller.effectiveShape(card.id);
-      if (shape == null) continue;
-      final handles = handlesFor(card.id, shape, metrics);
-      final handle = hitTestHandles(handles, point);
-      if (handle != null) return (card.id, handle);
-      if (OutlineCache.instance
-          .outlineFor(shape, metrics)
-          .paths
-          .contains(point)) {
-        return (card.id, null);
-      }
-    }
-    return null;
+    return interactionAt(
+      point,
+      [
+        for (final card in _orderedCards())
+          if (widget.controller.effectiveShape(card.id) case final shape?)
+            (card.id, shape),
+      ],
+      metrics,
+    );
   }
 
   void _onPanStart(DragStartDetails details, GridMetrics metrics) {

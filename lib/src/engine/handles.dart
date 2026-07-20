@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../foundation/cell.dart';
 import 'grid_metrics.dart';
+import 'outline_cache.dart';
 
 /// One grabbable resize affordance on a card edge or corner.
 ///
@@ -24,7 +25,13 @@ class GridHandle {
     this.corner,
     CellIndex? cellV,
     this.concave = false,
+    double? interiorReach,
+    double? outwardReach,
+    double? tangentReach,
   })  : cellV = cellV ?? cell,
+        interiorReach = interiorReach ?? defaultInteriorReach,
+        outwardReach = outwardReach ?? hitRadius,
+        tangentReach = tangentReach ?? hitRadius,
         assert((edge == null) != (corner == null),
             'A handle is either a side or a corner');
 
@@ -68,11 +75,24 @@ class GridHandle {
     };
   }
 
-  /// How far a handle's grab zone reaches into the card interior. The
-  /// outside half of the zone (over the gap) is fully grabbable, but inward
-  /// reach is capped so pressing card *content* near an edge grabs the card
-  /// body (move) instead of silently starting a resize.
-  static const double interiorReach = 12.0;
+  /// Default inward reach of a grab zone, measured from the card edge:
+  /// capped so pressing card *content* near an edge grabs the card body
+  /// (move) instead of silently starting a resize.
+  static const double defaultInteriorReach = 12.0;
+
+  /// How far the grab zone reaches into the card interior from [center].
+  final double interiorReach;
+
+  /// How far the grab zone reaches outward past [center] (into the gap or
+  /// empty cells). Card ownership is resolved by containment first (see
+  /// [interactionAt]), so generous outward reach never steals presses from
+  /// inside an adjacent card.
+  final double outwardReach;
+
+  /// Reach along the edge direction. Side handles cover their *entire* cell
+  /// edge (the visible circle at the midpoint is the affordance; the whole
+  /// edge is grabbable); corners use their circular radius.
+  final double tangentReach;
 
   /// Unit vector pointing away from the card interior: the edge normal for
   /// sides, the corner diagonal for convex corners, and the notch diagonal
@@ -96,10 +116,13 @@ class GridHandle {
 
   bool hits(Offset point) {
     final delta = point - center;
-    if (delta.distance > hitRadius) return false;
     final outwardDepth =
         delta.dx * outwardUnit.dx + delta.dy * outwardUnit.dy;
-    return outwardDepth >= -interiorReach;
+    if (outwardDepth > outwardReach || outwardDepth < -interiorReach) {
+      return false;
+    }
+    final tangentDelta = delta - outwardUnit * outwardDepth;
+    return tangentDelta.distance <= tangentReach;
   }
 
   String get debugLabel =>
@@ -127,6 +150,8 @@ List<GridHandle> handlesFor(
   final handles = <GridHandle>[];
   final hitRadius = (metrics.cellExtent * 0.38).clamp(12.0, 26.0);
   final outsideRadius = metrics.config.outsideCornerRadius;
+  // Side handles cover their whole cell edge.
+  final sideTangentReach = metrics.cellExtent / 2;
 
   for (final cell in shape.cells) {
     final rect = metrics.cellRect(cell);
@@ -136,42 +161,22 @@ List<GridHandle> handlesFor(
             cell.translate(edge.outward.$1, edge.outward.$2)),
     };
 
-    if (open[CardinalEdge.north]!) {
+    void addSide(CardinalEdge edge, Offset center) {
+      if (!open[edge]!) return;
       handles.add(GridHandle(
         cardId: cardId,
         cell: cell,
-        edge: CardinalEdge.north,
-        center: rect.topCenter,
+        edge: edge,
+        center: center,
         hitRadius: hitRadius,
+        tangentReach: sideTangentReach,
       ));
     }
-    if (open[CardinalEdge.south]!) {
-      handles.add(GridHandle(
-        cardId: cardId,
-        cell: cell,
-        edge: CardinalEdge.south,
-        center: rect.bottomCenter,
-        hitRadius: hitRadius,
-      ));
-    }
-    if (open[CardinalEdge.east]!) {
-      handles.add(GridHandle(
-        cardId: cardId,
-        cell: cell,
-        edge: CardinalEdge.east,
-        center: rect.centerRight,
-        hitRadius: hitRadius,
-      ));
-    }
-    if (open[CardinalEdge.west]!) {
-      handles.add(GridHandle(
-        cardId: cardId,
-        cell: cell,
-        edge: CardinalEdge.west,
-        center: rect.centerLeft,
-        hitRadius: hitRadius,
-      ));
-    }
+
+    addSide(CardinalEdge.north, rect.topCenter);
+    addSide(CardinalEdge.south, rect.bottomCenter);
+    addSide(CardinalEdge.east, rect.centerRight);
+    addSide(CardinalEdge.west, rect.centerLeft);
 
     // Convex corners: two adjacent open sides. Pull the grab center inward
     // along the diagonal by ~the outside corner radius so the affordance
@@ -186,6 +191,11 @@ List<GridHandle> handlesFor(
           corner: kind,
           center: cornerPoint + inwardDiagonal * pull,
           hitRadius: hitRadius,
+          // The center sits pulled inward from the corner: compensate both
+          // reaches so the entire visible disc responds — its inner half
+          // resizes instead of falling through to a card move.
+          interiorReach: GridHandle.defaultInteriorReach + pull,
+          outwardReach: hitRadius + pull,
         ));
       }
     }
@@ -228,6 +238,8 @@ List<GridHandle> handlesFor(
         concave: true,
         center: vertex + notchDiagonal * concavePull,
         hitRadius: hitRadius,
+        interiorReach: GridHandle.defaultInteriorReach + concavePull,
+        outwardReach: hitRadius + concavePull,
       ));
     }
 
@@ -262,4 +274,43 @@ GridHandle? hitTestHandles(List<GridHandle> handles, Offset point) {
     }
   }
   return best;
+}
+
+/// Resolves what a pointer at [point] grabs, honoring card ownership:
+///
+/// 1. The card whose outline *contains* the point owns it — its edge-band
+///    handles win near the edge, its body (a move) everywhere else. A
+///    neighbor's handle can never steal a press from inside a card.
+/// 2. When no card contains the point (gutters, empty cells), every card's
+///    outward handle zones compete and the nearest wins — so in the gap
+///    between two adjacent cards, each card's handle is grabbable on its
+///    own side of the gutter's midline.
+(String cardId, GridHandle? handle)? interactionAt(
+  Offset point,
+  List<(String, CardShape)> cardsTopFirst,
+  GridMetrics metrics,
+) {
+  for (final (id, shape) in cardsTopFirst) {
+    final contains = OutlineCache.instance
+        .outlineFor(shape, metrics)
+        .paths
+        .contains(point);
+    if (contains) {
+      return (id, hitTestHandles(handlesFor(id, shape, metrics), point));
+    }
+  }
+  GridHandle? best;
+  var bestScore = double.infinity;
+  for (final (id, shape) in cardsTopFirst) {
+    for (final handle in handlesFor(id, shape, metrics)) {
+      if (!handle.hits(point)) continue;
+      final distance = (point - handle.center).distance;
+      final score = handle.isCorner ? distance - 1000 : distance;
+      if (score < bestScore) {
+        bestScore = score;
+        best = handle;
+      }
+    }
+  }
+  return best == null ? null : (best.cardId, best);
 }
