@@ -455,27 +455,31 @@ class TeamCard extends StatelessWidget {
     return CardScaffold(
       icon: Icons.people_outline,
       title: 'TEAM',
-      child: Row(
-        children: [
-          for (final (index, initials) in _members.indexed)
-            Align(
-              widthFactor: 0.72,
-              child: CircleAvatar(
-                radius: 18,
-                backgroundColor: Color.lerp(
-                    theme.colorScheme.primary,
-                    theme.colorScheme.tertiary,
-                    index / (_members.length - 1))!,
-                child: Text(initials,
-                    style: theme.textTheme.labelSmall
-                        ?.copyWith(color: Colors.white)),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Row(
+          children: [
+            for (final (index, initials) in _members.indexed)
+              Align(
+                widthFactor: 0.72,
+                child: CircleAvatar(
+                  radius: 18,
+                  backgroundColor: Color.lerp(
+                      theme.colorScheme.primary,
+                      theme.colorScheme.tertiary,
+                      index / (_members.length - 1))!,
+                  child: Text(initials,
+                      style: theme.textTheme.labelSmall
+                          ?.copyWith(color: Colors.white)),
+                ),
               ),
-            ),
-          const Spacer(),
-          Text('6 online',
-              style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant)),
-        ],
+            const SizedBox(width: 16),
+            Text('6 online',
+                style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant)),
+          ],
+        ),
       ),
     );
   }

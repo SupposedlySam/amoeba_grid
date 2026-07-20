@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
@@ -7,33 +8,49 @@ import '../foundation/config.dart';
 
 /// Resolved pixel geometry for one viewport size.
 ///
-/// The grid uses square units. Cell extent flexes between the config's min
-/// and max so the fixed column count fills the viewport when possible; when
-/// it can't, the content overflows and pans.
+/// The grid uses square units. The config's column/row counts are minimums:
+/// when the viewport fits more units at [FluidGridConfig.maxCellExtent],
+/// the field grows to fill it. Cell extent flexes between the config's min
+/// and max; when even the minimum count can't fit at [minCellExtent], the
+/// content overflows and pans.
 @immutable
 class GridMetrics {
   const GridMetrics._({
     required this.config,
     required this.cellExtent,
     required this.viewportSize,
+    required this.columns,
+    required this.rows,
   });
 
   factory GridMetrics.resolve(FluidGridConfig config, Size viewportSize) {
-    final available =
-        viewportSize.width - config.gap * (config.columns + 1);
-    final ideal = available / config.columns;
+    int unitsThatFit(double viewportExtent) =>
+        ((viewportExtent - config.gap) /
+                (config.maxCellExtent + config.gap))
+            .floor();
+    final columns =
+        math.max(config.columns, unitsThatFit(viewportSize.width));
+    final rows = math.max(config.rows, unitsThatFit(viewportSize.height));
+    final available = viewportSize.width - config.gap * (columns + 1);
+    final ideal = available / columns;
     final extent =
         ideal.clamp(config.minCellExtent, config.maxCellExtent).toDouble();
     return GridMetrics._(
       config: config,
       cellExtent: extent,
       viewportSize: viewportSize,
+      columns: columns,
+      rows: rows,
     );
   }
 
   final FluidGridConfig config;
   final double cellExtent;
   final Size viewportSize;
+
+  /// Effective grid dimensions: config counts grown to fill the viewport.
+  final int columns;
+  final int rows;
 
   /// Distance from one cell origin to the next (cell + one gap).
   double get pitch => cellExtent + config.gap;
@@ -42,8 +59,8 @@ class GridMetrics {
 
   /// Total scrollable content size, including outer padding of one gap.
   Size get contentSize => Size(
-        config.columns * pitch + gap,
-        config.rows * pitch + gap,
+        columns * pitch + gap,
+        rows * pitch + gap,
       );
 
   /// Tile = cell plus half a gap on every side. Tiles partition the content
@@ -75,18 +92,15 @@ class GridMetrics {
   CellIndex cellAt(Offset contentPoint) {
     final col = ((contentPoint.dx - gap / 2) / pitch)
         .floor()
-        .clamp(0, config.columns - 1);
+        .clamp(0, columns - 1);
     final row = ((contentPoint.dy - gap / 2) / pitch)
         .floor()
-        .clamp(0, config.rows - 1);
+        .clamp(0, rows - 1);
     return CellIndex(col, row);
   }
 
   bool cellInBounds(CellIndex cell) =>
-      cell.col >= 0 &&
-      cell.col < config.columns &&
-      cell.row >= 0 &&
-      cell.row < config.rows;
+      cell.col >= 0 && cell.col < columns && cell.row >= 0 && cell.row < rows;
 
   /// Snap steps for a drag: how many whole cells a pixel delta has crossed,
   /// switching at the 50% point of each successive cell (gap midpoints
@@ -98,8 +112,11 @@ class GridMetrics {
       other is GridMetrics &&
       other.config == config &&
       other.cellExtent == cellExtent &&
-      other.viewportSize == viewportSize;
+      other.viewportSize == viewportSize &&
+      other.columns == columns &&
+      other.rows == rows;
 
   @override
-  int get hashCode => Object.hash(config, cellExtent, viewportSize);
+  int get hashCode =>
+      Object.hash(config, cellExtent, viewportSize, columns, rows);
 }

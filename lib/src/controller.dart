@@ -225,8 +225,8 @@ class FluidGridController extends ChangeNotifier {
     var dr = metrics.snapSteps(delta.dy);
     final origin = session.originShape;
     // Clamp the translation so the whole shape stays on the grid.
-    dc = dc.clamp(-origin.minCol, config.columns - 1 - origin.maxCol);
-    dr = dr.clamp(-origin.minRow, config.rows - 1 - origin.maxRow);
+    dc = dc.clamp(-origin.minCol, metrics.columns - 1 - origin.maxCol);
+    dr = dr.clamp(-origin.minRow, metrics.rows - 1 - origin.maxRow);
     final previous = session.lastCellDelta;
     if (previous != (dc, dr)) session.lastCellDelta = (dc, dr);
     return origin.translate(dc, dr);

@@ -217,9 +217,8 @@ CardShape? relocateBeyond(
   GridMetrics metrics,
 ) {
   final (dc, dr) = direction.outward;
-  final maxSteps = direction.isHorizontalDrag
-      ? metrics.config.columns
-      : metrics.config.rows;
+  final maxSteps =
+      direction.isHorizontalDrag ? metrics.columns : metrics.rows;
   for (var step = 1; step <= maxSteps; step++) {
     final candidate = shape.translate(dc * step, dr * step);
     final inBounds = candidate.cells.every(metrics.cellInBounds);

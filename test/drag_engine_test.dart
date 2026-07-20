@@ -188,5 +188,24 @@ void main() {
       final wide = GridMetrics.resolve(config, const Size(4000, 400));
       expect(wide.cellExtent, config.maxCellExtent);
     });
+
+    test('grid grows beyond config counts to fill the viewport', () {
+      const small = FluidGridConfig(
+          columns: 4,
+          rows: 4,
+          minCellExtent: 60,
+          maxCellExtent: 100,
+          gap: 10);
+      final grown = GridMetrics.resolve(small, const Size(1000, 500));
+      // (1000 - 10) / (100 + 10) = 9 columns fit at max extent.
+      expect(grown.columns, 9);
+      expect(grown.cellExtent, 100);
+      // (500 - 10) / 110 = 4.45 -> still the 4-row minimum.
+      expect(grown.rows, 4);
+      // Narrow viewports never drop below the config counts.
+      final narrow = GridMetrics.resolve(small, const Size(200, 200));
+      expect(narrow.columns, 4);
+      expect(narrow.rows, 4);
+    });
   });
 }

@@ -52,9 +52,8 @@ class GridBackdropPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..color = style.backdropDotColor;
-    final config = metrics.config;
-    for (var c = 0; c <= config.columns; c++) {
-      for (var r = 0; r <= config.rows; r++) {
+    for (var c = 0; c <= metrics.columns; c++) {
+      for (var r = 0; r <= metrics.rows; r++) {
         canvas.drawCircle(metrics.tileOrigin(c, r), 1.4, paint);
       }
     }

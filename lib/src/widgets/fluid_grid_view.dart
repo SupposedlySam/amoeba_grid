@@ -167,8 +167,20 @@ class _FluidGridViewState extends State<FluidGridView>
 
   // --- Drag ----------------------------------------------------------------
 
-  bool _shouldAcceptPan(Offset point, GridMetrics metrics) {
-    return _interactionAt(point, metrics) != null;
+  /// The card/handle grabbed at pointer-down, captured when the recognizer
+  /// joins the arena. The gesture may only be *accepted* after the pointer
+  /// has already traveled (past slop — or much farther on a fast flick), so
+  /// hit-testing again at onStart would miss the card the user grabbed.
+  (Offset downPosition, String cardId, GridHandle? handle)? _pendingGrab;
+
+  bool _capturePanDown(Offset point, GridMetrics metrics) {
+    final interaction = _interactionAt(point, metrics);
+    if (interaction == null) {
+      _pendingGrab = null;
+      return false;
+    }
+    _pendingGrab = (point, interaction.$1, interaction.$2);
+    return true;
   }
 
   (String cardId, GridHandle? handle)? _interactionAt(
@@ -190,13 +202,18 @@ class _FluidGridViewState extends State<FluidGridView>
   }
 
   void _onPanStart(DragStartDetails details, GridMetrics metrics) {
-    final interaction = _interactionAt(details.localPosition, metrics);
-    if (interaction == null) return;
-    final (cardId, handle) = interaction;
+    final grab = _pendingGrab;
+    _pendingGrab = null;
+    if (grab == null) return;
+    final (downPosition, cardId, handle) = grab;
     if (handle != null) {
-      widget.controller.startResize(handle, details.localPosition);
+      widget.controller.startResize(handle, downPosition);
     } else {
-      widget.controller.startMove(cardId, details.localPosition);
+      widget.controller.startMove(cardId, downPosition);
+    }
+    // Catch up with whatever distance was covered before acceptance.
+    if (details.localPosition != downPosition) {
+      widget.controller.updateDrag(details.localPosition);
     }
     _dragViewportPoint = _toViewportSpace(details.localPosition);
     _startAutoScroller();
@@ -358,7 +375,7 @@ class _FluidGridViewState extends State<FluidGridView>
           _CardPanRecognizer:
               GestureRecognizerFactoryWithHandlers<_CardPanRecognizer>(
             () => _CardPanRecognizer(
-                shouldAccept: (point) => _shouldAcceptPan(point, metrics)),
+                shouldAccept: (point) => _capturePanDown(point, metrics)),
             (recognizer) {
               recognizer.onStart = (details) => _onPanStart(details, metrics);
               recognizer.onUpdate = _onPanUpdate;

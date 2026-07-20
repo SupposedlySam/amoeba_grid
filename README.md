@@ -11,10 +11,12 @@ non-rectangular shapes).
 
 ## Highlights
 
-- **Fixed grid, fluid cells** — you configure `columns x rows`; the square
-  cell extent flexes between `minCellExtent` and `maxCellExtent` to fill the
-  viewport. When it can't fit, the field pans in both axes
-  (spreadsheet-style, powered by `TwoDimensionalScrollable`).
+- **Fluid grid, fluid cells** — you configure minimum `columns x rows`; the
+  square cell extent flexes between `minCellExtent` and `maxCellExtent` to
+  fill the viewport, and when there's room for more whole units at max
+  extent, the field grows extra columns/rows to match the window. When even
+  the minimum can't fit, the field pans in both axes (spreadsheet-style,
+  powered by `TwoDimensionalScrollable`).
 - **Cards are not just rectangles** — every open cell edge exposes a
   semicircular grab handle (progressively revealed on hover); dragging one
   extends or retracts *just that row/column strip*, and dragging
