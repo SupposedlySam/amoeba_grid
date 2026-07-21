@@ -42,6 +42,15 @@
   - a box/geometry width mismatch (plain `Padding` between the card and a
     flow widget) warns about broken span alignment.
 
+- **Fix — pressing a card grabbed the WRONG card after a resize/re-layout.** `RawGestureDetector`
+  constructs its recognizer once and only re-runs the *initializer* on rebuild, so the `GridMetrics`
+  closed over in the recognizer's constructor (the pointer-down hit test) froze at first-build
+  values while paint used fresh metrics. After the cell extent re-resolved — a window resize, or a
+  drag/rearrange that changed the occupied bounds — hit-testing and painting used different cell
+  sizes and a press grabbed a card offset from the pointer (worse the further it was scrolled). The
+  hit test now reads the controller's live metrics. Regression test:
+  `test/scroll_resize_hittest_test.dart`.
+
 ## 0.1.0
 
 - **New — `AmoebaListView`**: a fixed-extent, vertically-scrolling list whose rows RE-FLOW to

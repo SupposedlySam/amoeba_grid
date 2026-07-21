@@ -170,7 +170,14 @@ class _AmoebaGridViewState extends State<AmoebaGridView>
   /// hit-testing again at onStart would miss the card the user grabbed.
   (Offset downPosition, String cardId, GridHandle? handle)? _pendingGrab;
 
-  bool _capturePanDown(Offset point, GridMetrics metrics) {
+  bool _capturePanDown(Offset point) {
+    // Read the CURRENT metrics, never a value captured when this recognizer was built.
+    // RawGestureDetector constructs a recognizer ONCE and only re-runs the initializer on rebuild,
+    // so any GridMetrics closed over in the constructor (shouldAccept) goes stale the moment the cell
+    // extent re-resolves — a window resize or a layout rearrange. Hit-testing would then use a
+    // different cell size than paint and grab a card offset from the one under the pointer.
+    final metrics = widget.controller.metrics;
+    if (metrics == null) return false;
     // A revealed handle owns the press wherever its zone reaches; a fresh
     // resolution here would let a neighbor's containment steal the visible
     // affordance out from under the pointer.
@@ -388,8 +395,7 @@ class _AmoebaGridViewState extends State<AmoebaGridView>
         gestures: {
           _CardPanRecognizer:
               GestureRecognizerFactoryWithHandlers<_CardPanRecognizer>(
-            () => _CardPanRecognizer(
-                shouldAccept: (point) => _capturePanDown(point, metrics)),
+            () => _CardPanRecognizer(shouldAccept: _capturePanDown),
             (recognizer) {
               recognizer.onStart = (details) => _onPanStart(details, metrics);
               recognizer.onUpdate = _onPanUpdate;
