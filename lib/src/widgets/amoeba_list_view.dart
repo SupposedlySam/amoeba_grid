@@ -210,7 +210,12 @@ class _AmoebaListViewState extends State<AmoebaListView> {
         var lo = left;
         var hi = left + width;
         const step = 4.0;
-        var budget = maxArc;
+        // On a flush horizontal side, arc failures within the corner zone
+        // are the flush edge's own corners — content runs straight to that
+        // edge instead of walking inward.
+        final skipLo = leftIsFlush && lo <= pathBounds.left + cornerGuard;
+        final skipHi = rightIsFlush && hi >= pathBounds.right - cornerGuard;
+        var budget = skipLo ? 0.0 : maxArc;
         while (budget > 0 &&
             hi - lo > 0 &&
             (!path.contains(Offset(lo, top)) ||
@@ -218,7 +223,7 @@ class _AmoebaListViewState extends State<AmoebaListView> {
           lo += step;
           budget -= step;
         }
-        budget = maxArc;
+        budget = skipHi ? 0.0 : maxArc;
         while (budget > 0 &&
             hi - lo > 0 &&
             (!path.contains(Offset(hi, top)) ||
@@ -229,23 +234,35 @@ class _AmoebaListViewState extends State<AmoebaListView> {
         return (lo, (hi - lo).clamp(0.0, double.infinity));
       }
 
-      // Flush bottom (zero bottom inset): the box ends AT the outline, so
-      // rows near the bottom corner would probe into the corner arc and
-      // stair-step inward. Per-side padding ends before the corner turn:
-      // content runs straight to the edge and the card's rounded outline
-      // trims the corner pixels instead (edge-to-edge list look). Only the
-      // 0 case behaves this way — any real inset keeps today's arc probe.
-      final pathBottom = path?.getBounds().bottom ?? viewportHeight;
-      final bottomIsFlush = (pathBottom - viewportHeight).abs() < 1;
+      // Flush sides (zero inset): the box edge coincides with the outline
+      // there, so rows near an adjacent corner would probe into the arc
+      // and stair-step inward. Per-side padding ends before the corner
+      // turn: on a flush side content runs straight to the edge and the
+      // card's rounded outline trims the corner pixels (edge-to-edge list
+      // look). Applies per side and composes for any combination of flush
+      // sides; any non-zero inset keeps the normal arc probe.
+      final pathBounds = path?.getBounds() ??
+          Rect.fromLTWH(0, 0, viewportWidth, viewportHeight);
+      final topIsFlush = pathBounds.top.abs() < 1;
+      final bottomIsFlush = (pathBounds.bottom - viewportHeight).abs() < 1;
+      final leftIsFlush = pathBounds.left.abs() < 1;
+      final rightIsFlush = (pathBounds.right - viewportWidth).abs() < 1;
       final cornerGuard = config == null
           ? 0.0
           : (config.outsideCornerRadius > config.insideCornerRadius
                   ? config.outsideCornerRadius
                   : config.insideCornerRadius) +
               1;
-      double bottomProbeY(double y) => bottomIsFlush
-          ? (y > pathBottom - cornerGuard ? pathBottom - cornerGuard : y)
-          : y;
+      double probeY(double y) {
+        var clamped = y;
+        if (bottomIsFlush && clamped > pathBounds.bottom - cornerGuard) {
+          clamped = pathBounds.bottom - cornerGuard;
+        }
+        if (topIsFlush && clamped < pathBounds.top + cornerGuard) {
+          clamped = pathBounds.top + cornerGuard;
+        }
+        return clamped;
+      }
 
       final rows = <Widget>[];
       for (var i = 0; i < widget.itemCount; i++) {
@@ -255,9 +272,9 @@ class _AmoebaListViewState extends State<AmoebaListView> {
         final (rawLeft, rawWidth) = spanForRange(
             screenTop - clearance, screenTop + widget.itemExtent + clearance);
         final (spanLeft, spanWidth) = clearArcs(rawLeft, rawWidth,
-            bottomProbeY(screenTop.clamp(0.0, viewportHeight)),
-            bottomProbeY(
-                (screenTop + widget.itemExtent).clamp(0.0, viewportHeight)));
+            probeY(screenTop.clamp(0.0, viewportHeight)),
+            probeY((screenTop + widget.itemExtent)
+                .clamp(0.0, viewportHeight)));
         final left = spanLeft + widget.rowPadding.left;
         final width = (spanWidth - widget.rowPadding.horizontal).clamp(0.0, double.infinity);
         rows.add(Positioned(
