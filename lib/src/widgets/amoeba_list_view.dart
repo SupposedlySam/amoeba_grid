@@ -24,7 +24,7 @@ class AmoebaListView extends StatefulWidget {
     required this.itemBuilder,
     this.controller,
     this.rowPadding = EdgeInsets.zero,
-    this.edgeClearance = 6,
+    this.edgeClearance,
   });
 
   /// The fixed height of every row.
@@ -39,7 +39,13 @@ class AmoebaListView extends StatefulWidget {
   /// Vertical breathing room against horizontal shape edges: a row within
   /// this distance of a notch/step edge adopts the NARROWER neighboring
   /// span instead of rendering flush against (or under) the edge.
-  final double edgeClearance;
+  ///
+  /// Null (the default) derives it from the grid geometry: bands end at
+  /// tile boundaries, but the visible outline pokes `gap / 2` past them
+  /// and the notch's rounded shoulder eats `insideCornerRadius` more — a
+  /// fixed few pixels of clearance gets swallowed before a row visually
+  /// clears the edge at all.
+  final double? edgeClearance;
 
   @override
   State<AmoebaListView> createState() => _AmoebaListViewState();
@@ -85,6 +91,12 @@ class _AmoebaListViewState extends State<AmoebaListView> {
       final viewportWidth = constraints.maxWidth;
       final viewportHeight = constraints.maxHeight;
       final contentHeight = widget.itemCount * widget.itemExtent;
+
+      final config = geometry?.metrics.config;
+      final clearance = widget.edgeClearance ??
+          (config == null
+              ? 6.0
+              : config.gap / 2 + config.insideCornerRadius);
 
       // The free horizontal run (left, width) at a viewport-local Y, from the shape's row bands.
       (double, double) spanAt(double y) {
@@ -151,8 +163,7 @@ class _AmoebaListViewState extends State<AmoebaListView> {
         final screenTop = top - offset;
         if (screenTop > viewportHeight || screenTop + widget.itemExtent < 0) continue; // cull
         final (spanLeft, spanWidth) = spanForRange(
-            screenTop - widget.edgeClearance,
-            screenTop + widget.itemExtent + widget.edgeClearance);
+            screenTop - clearance, screenTop + widget.itemExtent + clearance);
         final left = spanLeft + widget.rowPadding.left;
         final width = (spanWidth - widget.rowPadding.horizontal).clamp(0.0, double.infinity);
         rows.add(Positioned(
