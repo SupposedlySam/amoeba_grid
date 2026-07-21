@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 import '../engine/content_geometry.dart';
+import '../foundation/diagnostics.dart';
+import 'outline_clip.dart';
 
 /// Publishes a card's shape-aware [AmoebaCardGeometry] to its content.
 ///
@@ -38,23 +41,55 @@ class AmoebaCardScope extends InheritedWidget {
 /// the padding carved off, so fluid widgets below it keep seeing spans and
 /// regions in their own coordinates. Use this instead of a plain Padding
 /// between the card and any Amoeba* layout widget.
+///
+/// The child is also CLIPPED to the silhouette eroded by the smallest
+/// padding side — padding that follows the shape the way rectangle padding
+/// follows a rectangle, enforced no matter what the child paints. Debug
+/// builds can tint that band red via
+/// [AmoebaGridDiagnostics.showPaddingOverlay].
 class AmoebaPadding extends StatelessWidget {
-  const AmoebaPadding({super.key, required this.padding, required this.child});
+  const AmoebaPadding({
+    super.key,
+    required this.padding,
+    required this.child,
+    this.clipToShape = true,
+  });
 
   final EdgeInsets padding;
   final Widget child;
+
+  /// Opt out of the eroded-outline clip (rarely wanted).
+  final bool clipToShape;
 
   @override
   Widget build(BuildContext context) {
     final geometry = AmoebaCardScope.maybeOf(context);
     final padded = Padding(padding: padding, child: child);
     if (geometry == null) return padded;
+    final deflated = geometry.deflate(padding);
+    Widget content = child;
+    if (clipToShape) {
+      final sides = [
+        padding.left, padding.top, padding.right, padding.bottom,
+      ]..sort();
+      final eroded = deflated.erodedPath(sides.first);
+      content = ClipPath(clipper: OutlineClipper(eroded), child: content);
+      if (kDebugMode && AmoebaGridDiagnostics.showPaddingOverlay) {
+        content = Stack(
+          fit: StackFit.expand,
+          children: [
+            content,
+            IgnorePointer(
+              child:
+                  CustomPaint(painter: PaddingOverlayPainter(deflated, eroded)),
+            ),
+          ],
+        );
+      }
+    }
     return Padding(
       padding: padding,
-      child: AmoebaCardScope(
-        geometry: geometry.deflate(padding),
-        child: child,
-      ),
+      child: AmoebaCardScope(geometry: deflated, child: content),
     );
   }
 }

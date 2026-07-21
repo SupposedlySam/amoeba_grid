@@ -1,28 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
-import '../engine/content_geometry.dart';
-import '../foundation/diagnostics.dart';
 import 'amoeba_card_scope.dart';
-
-/// Clips to the ERODED outline (the silhouette shrunk by the shape-
-/// following padding band) intersected with the body box — the hard
-/// guarantee that no body content paints outside the silhouette or into
-/// the padding band that hugs it, whatever a child does. Interior band
-/// boundaries are untouched: padding follows the edge only, exactly like
-/// rectangle padding follows a rectangle.
-class _OutlineClipper extends CustomClipper<Path> {
-  const _OutlineClipper(this.path);
-
-  final Path path;
-
-  @override
-  Path getClip(Size size) => Path.combine(
-      PathOperation.intersect, path, Path()..addRect(Offset.zero & size));
-
-  @override
-  bool shouldReclip(_OutlineClipper oldClipper) => oldClipper.path != path;
-}
 
 /// Shape-aware card scaffold: a [header] pinned inside the shape's TOPMOST
 /// solid span — where a title visually belongs, never inside a notch — and
@@ -147,70 +125,14 @@ class AmoebaShell extends StatelessWidget {
           top: bodyTop,
           child: AmoebaCardScope(
             geometry: bodyGeometry,
-            child: AmoebaPadding(
-              padding: EdgeInsets.fromLTRB(
-                  padding.left, 0, padding.right, padding.bottom),
-              // Clip to the OUTLINE, not the bounding box: the box covers
-              // the whole bounding rect, including regions the polyomino
-              // doesn't occupy — a child that ignores (or falls off) the
-              // spans must never paint onto the page background there.
-              // The padded child's local origin sits at (padding.left, 0)
-              // of the body geometry, so shift the path to match.
-              child: Builder(builder: (context) {
-                final scoped = AmoebaCardScope.of(context);
-                // Erode by the smallest chrome inset: the per-side span
-                // deflation already enforces the larger sides; the clip is
-                // the uniform shape-following backstop.
-                final inset = [
-                  padding.left, padding.right, padding.bottom,
-                ].reduce((a, b) => a < b ? a : b);
-                final eroded = scoped.erodedPath(inset);
-                final clipped = ClipPath(
-                  clipper: _OutlineClipper(eroded),
-                  child: body,
-                );
-                if (!kDebugMode || !AmoebaGridDiagnostics.showPaddingOverlay) {
-                  return clipped;
-                }
-                return Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    clipped,
-                    IgnorePointer(
-                      child: CustomPaint(
-                          painter: _PaddingOverlayPainter(scoped, eroded)),
-                    ),
-                  ],
-                );
-              }),
-            ),
+            // Full symmetric chrome (top included): AmoebaPadding insets
+            // spans on every outline side, clips to the eroded silhouette,
+            // and paints the debug band — same treatment as every other
+            // card body.
+            child: AmoebaPadding(padding: padding, child: body),
           ),
         ),
       ],
     );
   }
-}
-
-
-/// Debug-only: the padding band in translucent red — the ring between the
-/// outline and its eroded copy, hugging the silhouette like rectangle
-/// padding hugs a rectangle. Letters overlapping red are violating the
-/// shape-following padding.
-class _PaddingOverlayPainter extends CustomPainter {
-  const _PaddingOverlayPainter(this.geometry, this.eroded);
-
-  final AmoebaCardGeometry geometry;
-  final Path eroded;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final band =
-        Path.combine(PathOperation.difference, geometry.path, eroded);
-    canvas.clipRect(Offset.zero & size);
-    canvas.drawPath(band, Paint()..color = const Color(0x55FF3B30));
-  }
-
-  @override
-  bool shouldRepaint(_PaddingOverlayPainter oldDelegate) =>
-      oldDelegate.geometry != geometry || oldDelegate.eroded != eroded;
 }
