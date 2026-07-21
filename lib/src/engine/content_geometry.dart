@@ -5,6 +5,7 @@ import 'package:flutter/painting.dart';
 
 import '../foundation/cell.dart';
 import 'grid_metrics.dart';
+import 'outline.dart';
 import 'outline_cache.dart';
 
 /// One flow band: a slice of the card along the main axis whose available
@@ -94,6 +95,16 @@ class AmoebaCardGeometry {
 
   final CardShape shape;
   final GridMetrics metrics;
+
+  /// The outline eroded by [inset] on every edge — padding that FOLLOWS the
+  /// silhouette, like rectangle padding follows a rectangle. In the same
+  /// local coordinates as [path] (accumulated crops/insets accounted for).
+  Path erodedPath(double inset) {
+    final bounds = metrics.shapeBounds(shape);
+    return CardOutline.trace(shape, metrics, extraInset: inset)
+        .paths
+        .shift(-bounds.topLeft - Offset(insets.left, insets.top));
+  }
 
   /// Local content box size (the card's bounding rect, minus [insets]).
   final Size size;

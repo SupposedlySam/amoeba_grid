@@ -5,12 +5,12 @@ import '../engine/content_geometry.dart';
 import '../foundation/diagnostics.dart';
 import 'amoeba_card_scope.dart';
 
-/// Clips to the card outline INTERSECTED with the padded box — the hard
-/// guarantee that no body content ever paints outside the silhouette OR
-/// inside the chrome padding, whatever a child does. The raw outline alone
-/// is not enough: it extends `padding` past the box, so a partially
-/// scrolled row would shear right at the card edge instead of stopping at
-/// the padding line.
+/// Clips to the ERODED outline (the silhouette shrunk by the shape-
+/// following padding band) intersected with the body box — the hard
+/// guarantee that no body content paints outside the silhouette or into
+/// the padding band that hugs it, whatever a child does. Interior band
+/// boundaries are untouched: padding follows the edge only, exactly like
+/// rectangle padding follows a rectangle.
 class _OutlineClipper extends CustomClipper<Path> {
   const _OutlineClipper(this.path);
 
@@ -158,8 +158,15 @@ class AmoebaShell extends StatelessWidget {
               // of the body geometry, so shift the path to match.
               child: Builder(builder: (context) {
                 final scoped = AmoebaCardScope.of(context);
+                // Erode by the smallest chrome inset: the per-side span
+                // deflation already enforces the larger sides; the clip is
+                // the uniform shape-following backstop.
+                final inset = [
+                  padding.left, padding.right, padding.bottom,
+                ].reduce((a, b) => a < b ? a : b);
+                final eroded = scoped.erodedPath(inset);
                 final clipped = ClipPath(
-                  clipper: _OutlineClipper(scoped.path),
+                  clipper: _OutlineClipper(eroded),
                   child: body,
                 );
                 if (!kDebugMode || !AmoebaGridDiagnostics.showPaddingOverlay) {
@@ -171,7 +178,7 @@ class AmoebaShell extends StatelessWidget {
                     clipped,
                     IgnorePointer(
                       child: CustomPaint(
-                          painter: _PaddingOverlayPainter(scoped)),
+                          painter: _PaddingOverlayPainter(scoped, eroded)),
                     ),
                   ],
                 );
@@ -185,30 +192,25 @@ class AmoebaShell extends StatelessWidget {
 }
 
 
-/// Debug-only: the body's forbidden zone in translucent red — everything
-/// inside (outline ∩ box) that is NOT part of an allowed flow span. Letters
-/// overlapping red are violating padding/notch clearance.
+/// Debug-only: the padding band in translucent red — the ring between the
+/// outline and its eroded copy, hugging the silhouette like rectangle
+/// padding hugs a rectangle. Letters overlapping red are violating the
+/// shape-following padding.
 class _PaddingOverlayPainter extends CustomPainter {
-  const _PaddingOverlayPainter(this.geometry);
+  const _PaddingOverlayPainter(this.geometry, this.eroded);
 
   final AmoebaCardGeometry geometry;
+  final Path eroded;
 
   @override
   void paint(Canvas canvas, Size size) {
-    var zone = Path.combine(PathOperation.intersect, geometry.path,
-        Path()..addRect(Offset.zero & size));
-    final allowed = Path();
-    for (final band in geometry.rowBands) {
-      for (final span in band.spans) {
-        allowed.addRect(span);
-      }
-    }
-    zone = Path.combine(PathOperation.difference, zone, allowed);
-    canvas.drawPath(
-        zone, Paint()..color = const Color(0x55FF3B30));
+    final band =
+        Path.combine(PathOperation.difference, geometry.path, eroded);
+    canvas.clipRect(Offset.zero & size);
+    canvas.drawPath(band, Paint()..color = const Color(0x55FF3B30));
   }
 
   @override
   bool shouldRepaint(_PaddingOverlayPainter oldDelegate) =>
-      oldDelegate.geometry != geometry;
+      oldDelegate.geometry != geometry || oldDelegate.eroded != eroded;
 }

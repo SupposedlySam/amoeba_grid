@@ -35,14 +35,17 @@ class CardOutline {
 
   final List<OutlineCorner> corners;
 
-  static CardOutline trace(CardShape shape, GridMetrics metrics) {
+  /// [extraInset] erodes the outline uniformly beyond the gap/2 baseline —
+  /// a shape-following padding band (convex radii shrink, concave grow).
+  static CardOutline trace(CardShape shape, GridMetrics metrics,
+      {double extraInset = 0}) {
     final loops = _traceLoops(shape);
     final path = Path()..fillType = PathFillType.evenOdd;
     final allCorners = <OutlineCorner>[];
     for (final loop in loops) {
-      final corners = _insetLoop(loop, shape, metrics);
+      final corners = _insetLoop(loop, shape, metrics, extraInset);
       allCorners.addAll(corners);
-      _appendRounded(path, corners, metrics);
+      _appendRounded(path, corners, metrics, extraInset);
     }
     return CardOutline._(path, allCorners);
   }
@@ -127,8 +130,8 @@ class CardOutline {
 
   /// Converts a vertex loop to pixel space, merges collinear runs, and insets
   /// every edge toward the interior by gap/2.
-  static List<OutlineCorner> _insetLoop(
-      List<CellIndex> loop, CardShape shape, GridMetrics metrics) {
+  static List<OutlineCorner> _insetLoop(List<CellIndex> loop,
+      CardShape shape, GridMetrics metrics, double extraInset) {
     // Collapse collinear vertices first.
     final vertices = <CellIndex>[];
     for (var i = 0; i < loop.length; i++) {
@@ -140,7 +143,7 @@ class CardOutline {
       if (d1 != d2) vertices.add(curr);
     }
 
-    final inset = metrics.gap / 2;
+    final inset = metrics.gap / 2 + extraInset;
     final points = <Offset>[];
     final dirs = <Offset>[];
     for (var i = 0; i < vertices.length; i++) {
@@ -175,11 +178,12 @@ class CardOutline {
     return corners;
   }
 
-  static void _appendRounded(
-      Path path, List<OutlineCorner> corners, GridMetrics metrics) {
+  static void _appendRounded(Path path, List<OutlineCorner> corners,
+      GridMetrics metrics, double extraInset) {
     if (corners.isEmpty) return;
-    final outside = metrics.config.outsideCornerRadius;
-    final inside = metrics.config.insideCornerRadius;
+    final outside =
+        (metrics.config.outsideCornerRadius - extraInset).clamp(0.0, 1e9);
+    final inside = metrics.config.insideCornerRadius + extraInset;
 
     // Radius per corner, clamped so neighboring arcs never overlap.
     final radii = List<double>.generate(corners.length, (i) {
