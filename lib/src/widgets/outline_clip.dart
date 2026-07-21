@@ -31,7 +31,6 @@ class PaddingOverlayPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final band =
         Path.combine(PathOperation.difference, geometry.path, eroded);
-    canvas.clipRect(Offset.zero & size);
     canvas.drawPath(band, Paint()..color = const Color(0x55FF3B30));
   }
 

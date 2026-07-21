@@ -55,10 +55,14 @@ abstract final class AmoebaGridDiagnostics {
 
   static bool get isActive => kDebugMode && enabled;
 
-  /// Paints each AmoebaShell body's forbidden zone — outline minus the
-  /// allowed flow spans — in translucent red, so content overlapping the
-  /// padding/notch area is immediately visible. Debug mode only.
+  /// Paints every card's shape-following padding band — the ring between
+  /// its outline and the outline eroded by [paddingOverlayInset] — in
+  /// translucent red, so content overlapping the padding is immediately
+  /// visible. Debug mode only.
   static bool showPaddingOverlay = false;
+
+  /// Erosion depth visualized by [showPaddingOverlay].
+  static double paddingOverlayInset = 12;
 
   static final StreamController<AmoebaGridEvent> _controller =
       StreamController<AmoebaGridEvent>.broadcast();

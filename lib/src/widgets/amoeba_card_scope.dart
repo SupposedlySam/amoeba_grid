@@ -1,8 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 import '../engine/content_geometry.dart';
-import '../foundation/diagnostics.dart';
 import 'outline_clip.dart';
 
 /// Publishes a card's shape-aware [AmoebaCardGeometry] to its content.
@@ -74,18 +72,6 @@ class AmoebaPadding extends StatelessWidget {
       ]..sort();
       final eroded = deflated.erodedPath(sides.first);
       content = ClipPath(clipper: OutlineClipper(eroded), child: content);
-      if (kDebugMode && AmoebaGridDiagnostics.showPaddingOverlay) {
-        content = Stack(
-          fit: StackFit.expand,
-          children: [
-            content,
-            IgnorePointer(
-              child:
-                  CustomPaint(painter: PaddingOverlayPainter(deflated, eroded)),
-            ),
-          ],
-        );
-      }
     }
     return Padding(
       padding: padding,

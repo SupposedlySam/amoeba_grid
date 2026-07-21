@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../engine/grid_metrics.dart';
@@ -6,7 +7,9 @@ import '../foundation/cell.dart';
 import '../engine/content_geometry.dart';
 import '../engine/outline.dart';
 import '../engine/outline_cache.dart';
+import '../foundation/diagnostics.dart';
 import 'amoeba_card_scope.dart';
+import 'outline_clip.dart';
 
 /// Visual styling for the grid chrome. Card *content* styles itself; this
 /// covers the painted card surfaces, handles, previews, and backdrop.
@@ -341,6 +344,18 @@ class _AmoebaCardSurfaceState extends State<AmoebaCardSurface>
                 ),
               ),
             ),
+            if (kDebugMode && AmoebaGridDiagnostics.showPaddingOverlay)
+              Positioned.fromRect(
+                rect: contentRect,
+                child: IgnorePointer(
+                  child: CustomPaint(
+                    painter: PaddingOverlayPainter(
+                        _geometry,
+                        _geometry.erodedPath(
+                            AmoebaGridDiagnostics.paddingOverlayInset)),
+                  ),
+                ),
+              ),
           ],
         );
       },
