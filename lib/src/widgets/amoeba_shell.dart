@@ -1,5 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
+import '../engine/content_geometry.dart';
+import '../foundation/diagnostics.dart';
 import 'amoeba_card_scope.dart';
 
 /// Clips to the card outline INTERSECTED with the padded box — the hard
@@ -155,9 +158,22 @@ class AmoebaShell extends StatelessWidget {
               // of the body geometry, so shift the path to match.
               child: Builder(builder: (context) {
                 final scoped = AmoebaCardScope.of(context);
-                return ClipPath(
+                final clipped = ClipPath(
                   clipper: _OutlineClipper(scoped.path),
                   child: body,
+                );
+                if (!kDebugMode || !AmoebaGridDiagnostics.showPaddingOverlay) {
+                  return clipped;
+                }
+                return Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    clipped,
+                    IgnorePointer(
+                      child: CustomPaint(
+                          painter: _PaddingOverlayPainter(scoped)),
+                    ),
+                  ],
                 );
               }),
             ),
@@ -166,4 +182,33 @@ class AmoebaShell extends StatelessWidget {
       ],
     );
   }
+}
+
+
+/// Debug-only: the body's forbidden zone in translucent red — everything
+/// inside (outline ∩ box) that is NOT part of an allowed flow span. Letters
+/// overlapping red are violating padding/notch clearance.
+class _PaddingOverlayPainter extends CustomPainter {
+  const _PaddingOverlayPainter(this.geometry);
+
+  final AmoebaCardGeometry geometry;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    var zone = Path.combine(PathOperation.intersect, geometry.path,
+        Path()..addRect(Offset.zero & size));
+    final allowed = Path();
+    for (final band in geometry.rowBands) {
+      for (final span in band.spans) {
+        allowed.addRect(span);
+      }
+    }
+    zone = Path.combine(PathOperation.difference, zone, allowed);
+    canvas.drawPath(
+        zone, Paint()..color = const Color(0x55FF3B30));
+  }
+
+  @override
+  bool shouldRepaint(_PaddingOverlayPainter oldDelegate) =>
+      oldDelegate.geometry != geometry;
 }
