@@ -96,7 +96,9 @@ class _AmoebaListViewState extends State<AmoebaListView> {
       final clearance = widget.edgeClearance ??
           (config == null
               ? 6.0
-              : config.gap / 2 + config.insideCornerRadius);
+              : config.gap / 2 +
+                  config.insideCornerRadius +
+                  (geometry?.contentInset ?? 0));
 
       // The free horizontal run (left, width) at a viewport-local Y, from the shape's row bands.
       (double, double) spanAt(double y) {
@@ -164,12 +166,15 @@ class _AmoebaListViewState extends State<AmoebaListView> {
       // than any edge inset — a row whose slot lands beside a rounded
       // corner would poke into the curve. Probe the row's corners against
       // the outline path and walk each end inward until it clears.
-      final path = geometry?.path;
+      // Probe the surface content is actually CLIPPED to (the eroded
+      // outline when AmoebaPadding set one), not the raw outline.
+      final path = geometry?.contentClip ?? geometry?.path;
       final maxArc = config == null
           ? 0.0
           : (config.insideCornerRadius > config.outsideCornerRadius
                   ? config.insideCornerRadius
                   : config.outsideCornerRadius) +
+              (geometry?.contentInset ?? 0) +
               4;
       (double, double) clearArcs(
           double left, double width, double top, double bottom) {

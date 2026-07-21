@@ -64,7 +64,7 @@ class AmoebaPadding extends StatelessWidget {
     final geometry = AmoebaCardScope.maybeOf(context);
     final padded = Padding(padding: padding, child: child);
     if (geometry == null) return padded;
-    final deflated = geometry.deflate(padding);
+    var deflated = geometry.deflate(padding);
     Widget content = child;
     if (clipToShape) {
       final sides = [
@@ -72,6 +72,10 @@ class AmoebaPadding extends StatelessWidget {
       ]..sort();
       final eroded = deflated.erodedPath(sides.first);
       content = ClipPath(clipper: OutlineClipper(eroded), child: content);
+      // Publish the clip surface so flow widgets probe the SAME boundary
+      // this enforces — probing the raw outline lets a row believe it is
+      // clear while the stricter eroded clip shears its glyphs.
+      deflated = deflated.withContentClip(eroded, sides.first);
     }
     return Padding(
       padding: padding,

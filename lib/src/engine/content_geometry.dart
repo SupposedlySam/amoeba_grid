@@ -70,6 +70,8 @@ class AmoebaCardGeometry {
     required this.largestRect,
     required this.regions,
     required this.insets,
+    this.contentClip,
+    this.contentInset = 0,
   });
 
   factory AmoebaCardGeometry.compute(CardShape shape, GridMetrics metrics) {
@@ -128,6 +130,25 @@ class AmoebaCardGeometry {
   /// Accumulated padding applied by AmoebaPadding / cropping, relative to
   /// the card's original content box.
   final EdgeInsets insets;
+
+  /// The surface content is actually clipped to (the eroded outline set by
+  /// AmoebaPadding), when stricter than [path]. Flow widgets must probe
+  /// THIS boundary, not the raw outline, or their rows get sheared by a
+  /// clip they never saw coming.
+  final Path? contentClip;
+
+  /// The erosion depth behind [contentClip] — extra vertical clearance flow
+  /// widgets need against horizontal edges.
+  final double contentInset;
+
+  /// A copy carrying the clip surface [AmoebaPadding] enforces.
+  AmoebaCardGeometry withContentClip(Path clip, double inset) =>
+      AmoebaCardGeometry._(
+        shape: shape, metrics: metrics, size: size, path: path,
+        rowBands: rowBands, columnBands: columnBands,
+        largestRect: largestRect, regions: regions, insets: insets,
+        contentClip: clip, contentInset: inset,
+      );
 
   /// A copy with [padding] carved off every side: local origin moves to
   /// (padding.left, padding.top), spans and regions are trimmed, and
@@ -219,6 +240,8 @@ class AmoebaCardGeometry {
         insets.right + padding.right,
         insets.bottom + padding.bottom,
       ),
+      contentClip: contentClip?.shift(shifted),
+      contentInset: contentInset,
     );
   }
 
