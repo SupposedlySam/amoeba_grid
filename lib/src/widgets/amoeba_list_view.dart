@@ -204,35 +204,6 @@ class _AmoebaListViewState extends State<AmoebaListView> {
                   : config.outsideCornerRadius) +
               (geometry?.contentInset ?? 0) +
               4;
-      (double, double) clearArcs(
-          double left, double width, double top, double bottom) {
-        if (path == null || width <= 0) return (left, width);
-        var lo = left;
-        var hi = left + width;
-        const step = 4.0;
-        // On a flush horizontal side, arc failures within the corner zone
-        // are the flush edge's own corners — content runs straight to that
-        // edge instead of walking inward.
-        final skipLo = leftIsFlush && lo <= pathBounds.left + cornerGuard;
-        final skipHi = rightIsFlush && hi >= pathBounds.right - cornerGuard;
-        var budget = skipLo ? 0.0 : maxArc;
-        while (budget > 0 &&
-            hi - lo > 0 &&
-            (!path.contains(Offset(lo, top)) ||
-                !path.contains(Offset(lo, bottom)))) {
-          lo += step;
-          budget -= step;
-        }
-        budget = skipHi ? 0.0 : maxArc;
-        while (budget > 0 &&
-            hi - lo > 0 &&
-            (!path.contains(Offset(hi, top)) ||
-                !path.contains(Offset(hi, bottom)))) {
-          hi -= step;
-          budget -= step;
-        }
-        return (lo, (hi - lo).clamp(0.0, double.infinity));
-      }
 
       // Flush sides (zero inset): the box edge coincides with the outline
       // there, so rows near an adjacent corner would probe into the arc
@@ -263,6 +234,36 @@ class _AmoebaListViewState extends State<AmoebaListView> {
         }
         return clamped;
       }
+      (double, double) clearArcs(
+          double left, double width, double top, double bottom) {
+        if (path == null || width <= 0) return (left, width);
+        var lo = left;
+        var hi = left + width;
+        const step = 4.0;
+        // On a flush horizontal side, arc failures within the corner zone
+        // are the flush edge's own corners — content runs straight to that
+        // edge instead of walking inward.
+        final skipLo = leftIsFlush && lo <= pathBounds.left + cornerGuard;
+        final skipHi = rightIsFlush && hi >= pathBounds.right - cornerGuard;
+        var budget = skipLo ? 0.0 : maxArc;
+        while (budget > 0 &&
+            hi - lo > 0 &&
+            (!path.contains(Offset(lo, top)) ||
+                !path.contains(Offset(lo, bottom)))) {
+          lo += step;
+          budget -= step;
+        }
+        budget = skipHi ? 0.0 : maxArc;
+        while (budget > 0 &&
+            hi - lo > 0 &&
+            (!path.contains(Offset(hi, top)) ||
+                !path.contains(Offset(hi, bottom)))) {
+          hi -= step;
+          budget -= step;
+        }
+        return (lo, (hi - lo).clamp(0.0, double.infinity));
+      }
+
 
       final rows = <Widget>[];
       for (var i = 0; i < widget.itemCount; i++) {
