@@ -24,6 +24,7 @@ class AmoebaListView extends StatefulWidget {
     required this.itemBuilder,
     this.controller,
     this.rowPadding = EdgeInsets.zero,
+    this.edgeClearance = 6,
   });
 
   /// The fixed height of every row.
@@ -34,6 +35,11 @@ class AmoebaListView extends StatefulWidget {
 
   /// Inset applied to each row inside its shape span (so text clears the outline).
   final EdgeInsets rowPadding;
+
+  /// Vertical breathing room against horizontal shape edges: a row within
+  /// this distance of a notch/step edge adopts the NARROWER neighboring
+  /// span instead of rendering flush against (or under) the edge.
+  final double edgeClearance;
 
   @override
   State<AmoebaListView> createState() => _AmoebaListViewState();
@@ -98,13 +104,55 @@ class _AmoebaListViewState extends State<AmoebaListView> {
         return (widest.left, widest.width);
       }
 
+      // The run a row occupying [top, bottom] can use: the INTERSECTION of
+      // the spans of every band the row (plus edge clearance) overlaps.
+      // Sampling only the row's center let a row whose top or bottom few
+      // pixels crossed a notch/step edge render full-width, flush against
+      // the horizontal edge — no vertical breathing room. Intersecting
+      // narrows exactly the rows that touch an edge; if the bands' spans
+      // are horizontally disjoint (extreme shapes), fall back to the
+      // center sample rather than collapsing to nothing.
+      (double, double) spanForRange(double top, double bottom) {
+        final bands = geometry?.rowBands;
+        if (bands == null || bands.isEmpty) return (0, viewportWidth);
+        double? lo, hi;
+        for (final band in bands) {
+          if (band.end <= top || band.start >= bottom) continue;
+          // Within this band, prefer the span that best overlaps the
+          // running window (widest when the window is still unbounded).
+          Rect? best;
+          var bestOverlap = double.negativeInfinity;
+          for (final span in band.spans) {
+            final overlap = lo == null
+                ? span.width
+                : (span.right < hi! ? span.right : hi) -
+                    (span.left > lo ? span.left : lo);
+            if (overlap > bestOverlap) {
+              bestOverlap = overlap;
+              best = span;
+            }
+          }
+          if (best == null) continue;
+          final newLo = lo == null || best.left > lo ? best.left : lo;
+          final newHi = hi == null || best.right < hi ? best.right : hi;
+          if (newHi - newLo <= 0) {
+            return spanAt((top + bottom) / 2);
+          }
+          lo = newLo;
+          hi = newHi;
+        }
+        if (lo == null || hi == null) return spanAt((top + bottom) / 2);
+        return (lo, hi - lo);
+      }
+
       final rows = <Widget>[];
       for (var i = 0; i < widget.itemCount; i++) {
         final top = i * widget.itemExtent;
         final screenTop = top - offset;
         if (screenTop > viewportHeight || screenTop + widget.itemExtent < 0) continue; // cull
-        // Query at the row's centre so it transitions smoothly across a band edge as it scrolls.
-        final (spanLeft, spanWidth) = spanAt(screenTop + widget.itemExtent / 2);
+        final (spanLeft, spanWidth) = spanForRange(
+            screenTop - widget.edgeClearance,
+            screenTop + widget.itemExtent + widget.edgeClearance);
         final left = spanLeft + widget.rowPadding.left;
         final width = (spanWidth - widget.rowPadding.horizontal).clamp(0.0, double.infinity);
         rows.add(Positioned(
