@@ -70,6 +70,17 @@ class _AmoebaGridViewState extends State<AmoebaGridView>
   Ticker? _autoScroller;
   Offset? _dragViewportPoint;
 
+  /// Scroll offset captured when the drag SESSION begins. Drag events report
+  /// their `localPosition` through the gesture-arena transform that is frozen
+  /// at pointer-down, so a physically still pointer keeps reporting the same
+  /// local position even after the board auto-scrolls under it. Converting that
+  /// local position into viewport/content space must therefore subtract THIS
+  /// origin offset, never the live one — otherwise every auto-scroll frame
+  /// re-derives a viewport point drifted by the distance just scrolled, it
+  /// slides out of the edge margin, and the scroll stalls after a few frames
+  /// (issue #2: auto-scroll doesn't follow the card while pushing an edge).
+  Offset _dragOriginScroll = Offset.zero;
+
   static const double _autoScrollMargin = 56;
   static const double _autoScrollMaxSpeed = 14;
 
@@ -249,18 +260,19 @@ class _AmoebaGridViewState extends State<AmoebaGridView>
         'body long-press won the arena', {'card': cardId});
     // Same drag-engine path as an immediate pan; starting the session here
     // (before any movement) raises the card's lift cue as the pick-up signal.
+    _dragOriginScroll = _scrollOffset();
     widget.controller.startMove(cardId, downPosition);
     if (details.localPosition != downPosition) {
-      widget.controller.updateDrag(details.localPosition);
+      widget.controller.updateDrag(_contentPointOf(details.localPosition));
     }
-    _dragViewportPoint = _toViewportSpace(details.localPosition);
+    _dragViewportPoint = _viewportPointOf(details.localPosition);
     _startAutoScroller();
   }
 
   void _onLongPressMove(LongPressMoveUpdateDetails details) {
     if (!widget.controller.isDragging) return;
-    widget.controller.updateDrag(details.localPosition);
-    _dragViewportPoint = _toViewportSpace(details.localPosition);
+    widget.controller.updateDrag(_contentPointOf(details.localPosition));
+    _dragViewportPoint = _viewportPointOf(details.localPosition);
   }
 
   (String cardId, GridHandle? handle)? _interactionAt(
@@ -285,6 +297,7 @@ class _AmoebaGridViewState extends State<AmoebaGridView>
       return;
     }
     final (downPosition, cardId, handle) = grab;
+    _dragOriginScroll = _scrollOffset();
     if (handle != null) {
       widget.controller.startResize(handle, downPosition);
     } else {
@@ -292,16 +305,16 @@ class _AmoebaGridViewState extends State<AmoebaGridView>
     }
     // Catch up with whatever distance was covered before acceptance.
     if (details.localPosition != downPosition) {
-      widget.controller.updateDrag(details.localPosition);
+      widget.controller.updateDrag(_contentPointOf(details.localPosition));
     }
-    _dragViewportPoint = _toViewportSpace(details.localPosition);
+    _dragViewportPoint = _viewportPointOf(details.localPosition);
     _startAutoScroller();
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
     if (!widget.controller.isDragging) return;
-    widget.controller.updateDrag(details.localPosition);
-    _dragViewportPoint = _toViewportSpace(details.localPosition);
+    widget.controller.updateDrag(_contentPointOf(details.localPosition));
+    _dragViewportPoint = _viewportPointOf(details.localPosition);
   }
 
   void _onPanEnd() {
@@ -319,8 +332,14 @@ class _AmoebaGridViewState extends State<AmoebaGridView>
         _vertical.hasClients ? _vertical.offset : 0,
       );
 
-  Offset _toViewportSpace(Offset contentPoint) =>
-      contentPoint - _scrollOffset();
+  /// A drag event's local position is frozen in the pointer-down transform
+  /// (see [_dragOriginScroll]). Its viewport-space equivalent subtracts the
+  /// drag-origin offset; the live content-space point adds the CURRENT offset
+  /// back, so a still pointer tracks the content as the board scrolls beneath
+  /// it and the edge test reads the true viewport position every frame.
+  Offset _viewportPointOf(Offset dragLocal) => dragLocal - _dragOriginScroll;
+  Offset _contentPointOf(Offset dragLocal) =>
+      dragLocal - _dragOriginScroll + _scrollOffset();
 
   void _startAutoScroller() {
     _autoScroller?.dispose();
