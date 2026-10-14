@@ -1,3 +1,15 @@
+## 0.4.1
+
+- **Fix — the grid now uses the full viewport width.** The column count was the number of
+  columns that fit at `maxCellExtent`, rounded down. That count's ideal extent is above max, so
+  cells were clamped to max and up to a whole column of the viewport was left empty on the right
+  (88px at 1500px wide with max 128 / gap 12). The count now rounds up, to the smallest count
+  whose cells fit under max, so the columns span the width exactly whenever cells can stay at or
+  above `minCellExtent`. When no count can (a very narrow min..max band), it keeps cells at max
+  with some slack rather than shrinking below min and panning sideways. A filled width also no
+  longer leaves a ~1e-13px horizontal scroll range from floating-point overshoot. Regression
+  test: `test/grid_metrics_fill_test.dart` (sweeps widths across four configs).
+
 ## 0.4.0
 
 - **Breaking — `bodyDragActivation` now defaults to `BodyDragActivation.longPress`.** Moving a

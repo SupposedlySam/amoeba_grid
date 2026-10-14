@@ -185,8 +185,12 @@ void main() {
     test('cell extent clamps between min and max', () {
       final tight = GridMetrics.resolve(config, const Size(300, 400));
       expect(tight.cellExtent, config.minCellExtent);
+      // Wide: never above max. It used to sit AT max and leave the rest of
+      // the width empty; it now adds a column and fills the width exactly.
       final wide = GridMetrics.resolve(config, const Size(4000, 400));
-      expect(wide.cellExtent, config.maxCellExtent);
+      expect(wide.cellExtent, lessThanOrEqualTo(config.maxCellExtent));
+      expect(wide.cellExtent, greaterThanOrEqualTo(config.minCellExtent));
+      expect(wide.contentSize.width, closeTo(4000, 1e-6));
     });
 
     test('grid grows beyond config counts to fill the viewport', () {
