@@ -37,7 +37,7 @@ class GridMetrics {
                 (config.maxCellExtent + config.gap))
             .floor();
     final columns = math.max(math.max(config.columns, minColumns),
-        unitsThatFit(viewportSize.width));
+        _columnsThatFill(config, viewportSize.width));
     final rows = math.max(math.max(config.rows, minRows),
         unitsThatFit(viewportSize.height));
     final available = viewportSize.width - config.gap * (columns + 1);
@@ -51,6 +51,31 @@ class GridMetrics {
       columns: columns,
       rows: rows,
     );
+  }
+
+  /// The column count whose square cells span [width] EXACTLY: n cells plus
+  /// n+1 gaps, with the extent `(width - gap) / n - gap` inside
+  /// [minCellExtent, maxCellExtent].
+  ///
+  /// This used to be the count that fits at [maxCellExtent], rounded DOWN.
+  /// That count's ideal extent is >= max, so the clamp pinned cells at max
+  /// and left up to a whole pitch of the viewport empty on the right (88px at
+  /// 1500px wide with max 128 / gap 12). Rounding UP instead gives the
+  /// smallest count whose extent is <= max, which fills the width exactly
+  /// whenever that extent is still >= min.
+  ///
+  /// When it is not (a narrow min..max band, where no count fits exactly)
+  /// this falls back to rounding down: cells at max with some slack, rather
+  /// than cells below min, which would overflow and make the field pan
+  /// sideways for no reason.
+  static int _columnsThatFill(AmoebaGridConfig config, double width) {
+    final span = (width - config.gap) / (config.maxCellExtent + config.gap);
+    final up = span.ceil();
+    if (up > 0 &&
+        (width - config.gap) / up - config.gap >= config.minCellExtent) {
+      return up;
+    }
+    return span.floor();
   }
 
   final AmoebaGridConfig config;
@@ -67,10 +92,18 @@ class GridMetrics {
   double get gap => config.gap;
 
   /// Total scrollable content size, including outer padding of one gap.
+  ///
+  /// A width that fills the viewport is computed as `columns * pitch + gap`,
+  /// which lands up to ~5e-13px PAST the viewport (measured on 1 in 13
+  /// widths). The canvas turns any overflow into a scroll range, so a filled
+  /// field would pan by nothing. Within 1e-6px the viewport extent is taken.
   Size get contentSize => Size(
-        columns * pitch + gap,
-        rows * pitch + gap,
+        _snapTo(columns * pitch + gap, viewportSize.width),
+        _snapTo(rows * pitch + gap, viewportSize.height),
       );
+
+  static double _snapTo(double value, double target) =>
+      (value - target).abs() < 1e-6 ? target : value;
 
   /// Tile = cell plus half a gap on every side. Tiles partition the content
   /// area; a card's visual region is the union of its cells' tiles deflated

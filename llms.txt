@@ -8,7 +8,11 @@ Import: `package:amoeba_grid/amoeba_grid.dart`. Pure Flutter (no plugins).
 
 - The field is a grid of SQUARE units. `AmoebaGridConfig.columns/rows` are
   MINIMUMS: effective counts (`GridMetrics.columns/rows`) grow to fill the
-  viewport at `maxCellExtent`, and further to cover any occupied cell.
+  viewport, and further to cover any occupied cell. Columns: the smallest
+  count whose cells fit at or under `maxCellExtent`
+  (ceil((viewportWidth - gap) / (maxCellExtent + gap))), so the columns span
+  the full width exactly; if that would put cells under `minCellExtent`, one
+  fewer (cells at max, some slack). Rows: as many as fit at `maxCellExtent`.
 - Cell extent flexes: `clamp((viewportWidth - gap*(cols+1)) / cols,
   minCellExtent, maxCellExtent)`. Pitch = cellExtent + gap. When even
   minCellExtent doesn't fit, the field pans (TwoDimensionalScrollable).
