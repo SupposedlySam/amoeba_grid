@@ -101,7 +101,7 @@ the press wherever its zone reaches:
 
 | Gesture | Result |
 | --- | --- |
-| Drag card body | Move the whole card; snapped preview at 50% crossings (with `bodyDragActivation: BodyDragActivation.longPress`, hold ~350ms first) |
+| Long-press card body, then drag | Move the whole card; snapped preview at 50% crossings |
 | Drag anywhere along a side edge | Extend/retract that single row/column strip |
 | ...then drag perpendicular | Grow only the new section in that direction |
 | Drag a corner (convex or concave) | Standard corner resize: both edge segments through the corner |
@@ -109,9 +109,10 @@ the press wherever its zone reaches:
 | Background drag / trackpad scroll | Pan the whole field in both axes |
 | <kbd>Esc</kbd> during a drag | Cancel and revert everything |
 
-By default a pan anywhere on a card body moves it. If card content needs its own taps and
-scrolls, set `AmoebaGridConfig(bodyDragActivation: BodyDragActivation.longPress)`: body moves
-then start only after a hold, and edge/corner handles still drag immediately.
+A card body moves after a ~350ms hold, so the card's own content keeps its taps and scrolls;
+the card lifts when the hold registers. Edge and corner handles drag immediately. For cards
+whose content is purely visual, `AmoebaGridConfig(bodyDragActivation:
+BodyDragActivation.immediate)` makes any pan on the body move the card instead.
 
 Handles reveal progressively on hover, cover their entire edge (not just
 the visible circle), and once revealed they own the press wherever their

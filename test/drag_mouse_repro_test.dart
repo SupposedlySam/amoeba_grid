@@ -12,8 +12,15 @@ class _AllDevices extends MaterialScrollBehavior {
 void main() {
   testWidgets('mouse drag over InkWell content, small increments',
       (tester) async {
+    // Pins IMMEDIATE explicitly: this covers the drag-through-content path,
+    // which stopped being the default in 0.4.0 (longPress is now).
     const config = AmoebaGridConfig(
-        columns: 8, rows: 8, gap: 10, minCellExtent: 80, maxCellExtent: 80);
+        columns: 8,
+        rows: 8,
+        gap: 10,
+        minCellExtent: 80,
+        maxCellExtent: 80,
+        bodyDragActivation: BodyDragActivation.immediate);
     final controller = AmoebaGridController(config: config);
 
     await tester.pumpWidget(MaterialApp(
