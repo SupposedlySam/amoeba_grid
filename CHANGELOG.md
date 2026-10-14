@@ -1,4 +1,4 @@
-## Unreleased
+## 0.3.1
 
 - **Fix — edge auto-scroll stalled while pushing a card against a viewport edge** (#2). Drag
   events report `localPosition` through the transform captured at pointer-down, so a still
@@ -8,6 +8,10 @@
   perfectly still hold worked. Drag coordinates now convert against the scroll offset captured at
   drag start. Regression tests: `test/edge_auto_scroll_gents_repro_test.dart` (jitter against the
   edge) and `test/edge_auto_scroll_test.dart` (both directions, both body-drag activation modes).
+
+- **Docs**: README and `llms.txt` now cover `bodyDragActivation`, `AmoebaShell`,
+  `AmoebaListView`, `AmoebaPadding.clipToShape` and the padding overlay. The README's Status
+  line no longer claims `0.0.1`.
 
 ## 0.3.0
 
