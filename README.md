@@ -101,13 +101,17 @@ the press wherever its zone reaches:
 
 | Gesture | Result |
 | --- | --- |
-| Drag card body | Move the whole card; snapped preview at 50% crossings |
+| Drag card body | Move the whole card; snapped preview at 50% crossings (with `bodyDragActivation: BodyDragActivation.longPress`, hold ~350ms first) |
 | Drag anywhere along a side edge | Extend/retract that single row/column strip |
 | ...then drag perpendicular | Grow only the new section in that direction |
 | Drag a corner (convex or concave) | Standard corner resize: both edge segments through the corner |
 | Drag near a viewport edge | Auto-pans the field under the drag |
 | Background drag / trackpad scroll | Pan the whole field in both axes |
 | <kbd>Esc</kbd> during a drag | Cancel and revert everything |
+
+By default a pan anywhere on a card body moves it. If card content needs its own taps and
+scrolls, set `AmoebaGridConfig(bodyDragActivation: BodyDragActivation.longPress)`: body moves
+then start only after a hold, and edge/corner handles still drag immediately.
 
 Handles reveal progressively on hover, cover their entire edge (not just
 the visible circle), and once revealed they own the press wherever their
@@ -127,7 +131,9 @@ and a small widget family builds on it:
 | `AmoebaRegions` | One builder call per rectangular sub-region (area-descending) |
 | `AmoebaColumn` / `AmoebaRow` / `AmoebaFlow` | Flow children along an axis, constrained to the free span at each position |
 | `AmoebaText` | Text that wraps band-by-band around notches (a `shape-outside` equivalent) |
-| `AmoebaPadding` | Outline-aware padding: interior card edges (notches, steps) respect it too |
+| `AmoebaPadding` | Outline-aware padding: interior card edges (notches, steps) respect it too; clips its child to the eroded silhouette by default (`clipToShape: false` to opt out) |
+| `AmoebaShell` | Header/body card scaffold: the header pins inside the topmost solid span, the body gets the full remaining shape so flow widgets keep re-flowing through notches |
+| `AmoebaListView` | Fixed-extent scrolling list whose rows re-flow to the shape every scroll frame: narrow under a notch, full width where the card is solid |
 
 All degrade gracefully to plain rectangular behavior outside a card.
 Content lays out against the settled target shape while the morph clip
@@ -164,6 +170,6 @@ cd example && flutter run -d macos
 
 ## Status
 
-`0.0.1` — early and opinionated. The API surface is intentionally small;
+Early and opinionated. The API surface is intentionally small;
 issues and PRs welcome at
 [SupposedlySam/amoeba_grid](https://github.com/SupposedlySam/amoeba_grid).

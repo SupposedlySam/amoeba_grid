@@ -25,8 +25,12 @@ Import: `package:amoeba_grid/amoeba_grid.dart`. Pure Flutter (no plugins).
 ## Core API
 
 AmoebaGridConfig({columns=8, rows=12, minCellExtent=72, maxCellExtent=160,
-  gap=12, insideCornerRadius=10, outsideCornerRadius=22, breakpoints});
+  gap=12, insideCornerRadius=10, outsideCornerRadius=22, breakpoints,
+  bodyDragActivation=BodyDragActivation.immediate});
   breakpoints default [0,600,905,1240,1600] (viewport-width buckets).
+  bodyDragActivation: immediate = a pan anywhere on the body moves the card;
+  longPress = body move starts after a ~350ms hold, so taps/scrolls inside
+  card content win. Edge/corner handles drag immediately in both modes.
 
 AmoebaGridController({required config, AmoebaGridStorage? storage,
   String? storageKey})
@@ -52,7 +56,7 @@ AmoebaGridStyle.fromTheme(theme) or const AmoebaGridStyle(cardColor,
 
 ## Interaction semantics (what gestures do)
 
-- Body drag = MOVE. Preview (accent outline) snaps at 50% of each cell
+- Body drag = MOVE (after a ~350ms hold when bodyDragActivation is longPress). Preview (accent outline) snaps at 50% of each cell
   crossing (pitch covers cell+gap). Drop commits; Esc cancels.
 - Side handle drag = STRIP resize: only the row/col strip under that edge
   segment extends/retracts. Retraction never empties or disconnects a
@@ -91,9 +95,20 @@ largestRect, regions (greedy maximal-rectangle decomposition), insets.
   intersection.
 - AmoebaText(text, {style, lineSpacing}): greedy band-by-band line layout;
   wraps around notches incl. split spans; no selection; single style.
-- AmoebaPadding({padding, child}): pads AND republishes deflated geometry.
-  Outline-aware: interior card edges (notches/steps) receive padding too.
+- AmoebaPadding({padding, child, clipToShape=true}): pads AND republishes
+  deflated geometry. Outline-aware: interior card edges (notches/steps)
+  receive padding too. Clips the child to the eroded silhouette unless
+  clipToShape is false.
   Use it (not plain Padding) above any Amoeba* layout widget.
+- AmoebaShell({header, body, padding, headerExtent=22, gap=8,
+  compactExtent=84, minHeaderWidth=140}): header pinned in the topmost solid
+  span wide enough for it; body receives the full remaining shape (already
+  cropped below the header). Below compactExtent only the header renders.
+- AmoebaListView({itemExtent, itemCount, itemBuilder, controller,
+  rowPadding, edgeClearance}): fixed-extent vertical list; each row is
+  constrained to the shape span at its scrolled position, re-queried every
+  scroll frame. Do NOT nest it in AmoebaContentArea (that hides the notches);
+  inset with AmoebaPadding.
 - Constraint: AmoebaFlow/AmoebaText must fill their scope box; use
   AmoebaPadding to inset, never a bare Padding, or their band coordinates
   misalign.
@@ -107,7 +122,9 @@ hit), gestureAccepted/Rejected (arena outcomes), dragStart, dragUpdate,
 previewChanged, submissiveTrimmed/Relocated/Reverted, dragCancelled,
 layoutCommitted (includes full committed layout on recompute),
 layoutLoaded/Saved, edgeAutoScroll. attachDebugPrintLogger() pipes to
-debugPrint with an [amoeba_grid] prefix.
+debugPrint with an [amoeba_grid] prefix. showPaddingOverlay (+
+paddingOverlayInset) paints each card's padding band translucent red in
+debug builds.
 
 ## Recipes
 
