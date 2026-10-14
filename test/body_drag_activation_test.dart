@@ -13,8 +13,9 @@ void main() {
     bodyDragActivation: BodyDragActivation.longPress,
   );
 
-  Future<AmoebaGridController> pumpGrid(WidgetTester tester) async {
-    final controller = AmoebaGridController(config: config);
+  Future<AmoebaGridController> pumpGrid(WidgetTester tester,
+      {AmoebaGridConfig gridConfig = config}) async {
+    final controller = AmoebaGridController(config: gridConfig);
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: AmoebaGridView(
@@ -35,6 +36,37 @@ void main() {
     await tester.pumpAndSettle();
     return controller;
   }
+
+  test('the default is longPress, so card content stays interactive', () {
+    expect(const AmoebaGridConfig().bodyDragActivation,
+        BodyDragActivation.longPress);
+  });
+
+  testWidgets('default config: a quick pan over content does not move the card',
+      (tester) async {
+    // Behavioural half of the default check: a config that never mentions
+    // bodyDragActivation must not hand body pans to the card.
+    final controller = await pumpGrid(tester,
+        gridConfig: const AmoebaGridConfig(
+            columns: 8,
+            rows: 8,
+            gap: 10,
+            minCellExtent: 80,
+            maxCellExtent: 80));
+    final pitch = controller.metrics!.pitch;
+
+    final gesture =
+        await tester.startGesture(tester.getCenter(find.text('CONTENT')));
+    await gesture.moveBy(Offset(pitch * 2.1, 0),
+        timeStamp: const Duration(milliseconds: 100));
+    await tester.pump();
+    final dragging = controller.isDragging;
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(dragging, isFalse);
+    expect(controller.committedShape('a'), CardShape.rect(0, 0, 2, 2));
+  });
 
   testWidgets('longPress: a quick pan over content does not move the card',
       (tester) async {

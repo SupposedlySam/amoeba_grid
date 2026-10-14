@@ -1,3 +1,12 @@
+## 0.4.0
+
+- **Breaking — `bodyDragActivation` now defaults to `BodyDragActivation.longPress`.** Moving a
+  card by its body takes a ~350ms hold, then a drag. With the old `immediate` default every pan
+  on a body moved the card, so buttons, lists and scrollables inside a card could never win a
+  drag, and real card content was unusable. Edge and corner handles still drag immediately. To
+  keep the old behavior (e.g. purely visual cards), pass
+  `bodyDragActivation: BodyDragActivation.immediate`.
+
 ## 0.3.1
 
 - **Fix — edge auto-scroll stalled while pushing a card against a viewport edge** (#2). Drag

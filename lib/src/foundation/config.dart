@@ -33,7 +33,7 @@ class AmoebaGridConfig {
     this.insideCornerRadius = 10,
     this.outsideCornerRadius = 22,
     this.breakpoints = defaultBreakpoints,
-    this.bodyDragActivation = BodyDragActivation.immediate,
+    this.bodyDragActivation = BodyDragActivation.longPress,
   })  : assert(columns > 0),
         assert(rows > 0),
         assert(minCellExtent > 0),
@@ -72,8 +72,11 @@ class AmoebaGridConfig {
   final List<double> breakpoints;
 
   /// How a drag on a card body begins. Defaults to
-  /// [BodyDragActivation.immediate] (the historical behavior); use
-  /// [BodyDragActivation.longPress] to keep card content interactive.
+  /// [BodyDragActivation.longPress] so card content stays interactive: with
+  /// [BodyDragActivation.immediate] every pan on a body moves the card, so a
+  /// card's own buttons, lists and scrollables can never win a drag. That was
+  /// the default before 0.4.0; it is still the right choice for cards whose
+  /// content is purely visual.
   final BodyDragActivation bodyDragActivation;
 
   /// Material 3 window-class edges.

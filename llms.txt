@@ -26,11 +26,12 @@ Import: `package:amoeba_grid/amoeba_grid.dart`. Pure Flutter (no plugins).
 
 AmoebaGridConfig({columns=8, rows=12, minCellExtent=72, maxCellExtent=160,
   gap=12, insideCornerRadius=10, outsideCornerRadius=22, breakpoints,
-  bodyDragActivation=BodyDragActivation.immediate});
+  bodyDragActivation=BodyDragActivation.longPress});
   breakpoints default [0,600,905,1240,1600] (viewport-width buckets).
-  bodyDragActivation: immediate = a pan anywhere on the body moves the card;
-  longPress = body move starts after a ~350ms hold, so taps/scrolls inside
-  card content win. Edge/corner handles drag immediately in both modes.
+  bodyDragActivation: longPress (default since 0.4.0) = body move starts
+  after a ~350ms hold, so taps/scrolls inside card content win; immediate =
+  a pan anywhere on the body moves the card (content cannot win a drag).
+  Edge/corner handles drag immediately in both modes.
 
 AmoebaGridController({required config, AmoebaGridStorage? storage,
   String? storageKey})
@@ -56,8 +57,9 @@ AmoebaGridStyle.fromTheme(theme) or const AmoebaGridStyle(cardColor,
 
 ## Interaction semantics (what gestures do)
 
-- Body drag = MOVE (after a ~350ms hold when bodyDragActivation is longPress). Preview (accent outline) snaps at 50% of each cell
-  crossing (pitch covers cell+gap). Drop commits; Esc cancels.
+- Body long-press then drag = MOVE (no hold with bodyDragActivation
+  immediate). Preview (accent outline) snaps at 50% of each cell crossing
+  (pitch covers cell+gap). Drop commits; Esc cancels.
 - Side handle drag = STRIP resize: only the row/col strip under that edge
   segment extends/retracts. Retraction never empties or disconnects a
   shape. L-gesture: after dragging outward, perpendicular movement grows
