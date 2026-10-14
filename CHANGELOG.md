@@ -1,3 +1,14 @@
+## Unreleased
+
+- **Fix — edge auto-scroll stalled while pushing a card against a viewport edge** (#2). Drag
+  events report `localPosition` through the transform captured at pointer-down, so a still
+  pointer keeps the same local position while the board scrolls beneath it. The view converted
+  it with the LIVE scroll offset, so every auto-scroll frame drifted the derived point out of the
+  edge margin and the scroll stopped after a few frames. Only real jittery pushing exposed it; a
+  perfectly still hold worked. Drag coordinates now convert against the scroll offset captured at
+  drag start. Regression tests: `test/edge_auto_scroll_gents_repro_test.dart` (jitter against the
+  edge) and `test/edge_auto_scroll_test.dart` (both directions, both body-drag activation modes).
+
 ## 0.3.0
 
 - **New — `AmoebaGridConfig.bodyDragActivation`** (`BodyDragActivation`):
